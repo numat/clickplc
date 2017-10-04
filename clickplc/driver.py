@@ -5,7 +5,12 @@ import asyncio
 from platform import python_version
 from struct import pack
 
-from pymodbus.client.async_asyncio import ReconnectingAsyncioModbusTcpClient
+try:
+    from pymodbus.client.async_asyncio import ReconnectingAsyncioModbusTcpClient  # noqa
+except:
+    raise ImportError("This driver requires a branch of pymodbus to run "
+                      "correctly. Install with `pip install git+https://"
+                      "github.com/riptideio/pymodbus.git@python3`.")
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 

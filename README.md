@@ -9,21 +9,12 @@ Installation
 ============
 
 ```
+pip install git+https://github.com/riptideio/pymodbus.git@python3
 pip install clickplc
 ```
 
-If you don't like pip, you can also install from source:
-
-```
-git clone https://github.com/numat/clickplc.git
-cd alicat
-python setup.py install
-```
-
-Currently, this depends on an [unmerged branch of pymodbus](https://github.com/riptideio/pymodbus/pull/72#issuecomment-332711442)
-for asyncio support. Pip should install it automatically, but, if not, install with
-`pip install git+https://github.com/riptideio/pymodbus.git@python3`. This will
-be removed once the branch is merged with master.
+The dependency install is due to an [unmerged branch of pymodbus](https://github.com/riptideio/pymodbus/pull/72#issuecomment-332711442)
+for asyncio support. This will be rolled into `setup.py` once the branch is merged with master.
 
 Usage
 =====
@@ -43,6 +34,7 @@ This uses Python >=3.5's async/await syntax to asynchronously communicate with
 a ClickPLC. For example:
 
 ```python
+from clickplc import ClickPLC
 plc = ClickPLC('the-plc-ip-address')
 
 async def get():
