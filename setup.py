@@ -6,17 +6,17 @@ if python_version() < '3.5':
 
 setup(
     name="clickplc",
-    version="0.1.0",
+    version="0.1.1",
     description="Python driver for Koyo Ethernet ClickPLCs.",
     url="http://github.com/numat/clickplc/",
     author="Patrick Fuller",
     author_email="pat@numat-tech.com",
     packages=['clickplc'],
     install_requires=[
-        'pymodbus==1.2.0py3'
+        'pymodbus'
     ],
     dependency_links=[
-        'git+ssh://git@github.com/riptideio/pymodbus.git@python3#egg=pymodbus-1.2.0py3'  # noqa
+        'git+https://github.com/riptideio/pymodbus.git@python3#egg=pymodbus-1.2.1'  # noqa
     ],
     entry_points={
         'console_scripts': [('clickplc = clickplc:command_line')]

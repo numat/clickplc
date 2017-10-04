@@ -20,6 +20,11 @@ cd alicat
 python setup.py install
 ```
 
+Currently, this depends on an [unmerged branch of pymodbus](https://github.com/riptideio/pymodbus/pull/72#issuecomment-332711442)
+for asyncio support. Pip should install it automatically, but, if not, install with
+`pip install git+https://github.com/riptideio/pymodbus.git@python3`. This will
+be removed once the branch is merged with master.
+
 Usage
 =====
 
