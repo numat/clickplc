@@ -3,7 +3,9 @@ clickplc
 
 Python driver for [Koyo Ethernet ClickPLCs](https://www.automationdirect.com/adc/Overview/Catalog/Programmable_Controllers/CLICK_Series_PLCs_(Stackable_Micro_Brick)).
 
-![](https://www.automationdirect.com/microsites/clickplcs/images/expandedclick.jpg)
+<p align="center">
+  <img src="https://www.automationdirect.com/microsites/clickplcs/images/expandedclick.jpg" />
+</p>
 
 Installation
 ============
