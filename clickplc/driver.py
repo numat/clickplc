@@ -24,7 +24,7 @@ class ClickPLC(object):
     This interface handles the quirks of both Modbus TCP/IP and the ClickPLC,
     abstracting corner cases and providing a simple asynchronous interface.
     """
-    supported = {'read': ['x', 'y', 'df'], 'write': ['y', 'df']}
+    supported = ['x', 'y', 'df']
 
     def __init__(self, address, timeout=1, loop=None):
         """Sets up communication parameters."""
@@ -66,7 +66,7 @@ class ClickPLC(object):
 
         if end_index is not None and end_index < start_index:
             raise ValueError("End address must be greater than start address.")
-        if category not in self.supported['read']:
+        if category not in self.supported:
             raise ValueError("{} currently unsupported.".format(category))
         if end is not None and end[:i].lower() != category:
             raise ValueError("Inter-category ranges are unsupported.")
@@ -95,7 +95,7 @@ class ClickPLC(object):
 
         i = address.index(next(s for s in address if s.isdigit()))
         category, index = address[:i].lower(), int(address[i:])
-        if category not in self.supported['write']:
+        if category not in self.supported:
             raise ValueError("{} currently unsupported.".format(category))
         return await getattr(self, '_set_' + category)(index, data)
 
@@ -246,6 +246,34 @@ class ClickPLC(object):
             return decoder.decode_32bit_float()
         return {'df{:d}'.format(n): decoder.decode_32bit_float()
                 for n in range(start, end + 1)}
+
+    async def _set_x(self, start, data):
+        """Sets X addresses. Called by `set`.
+
+        For more information on the quirks of X coils, read the `_get_x`
+        docstring.
+        """
+        if start % 100 == 0 or start % 100 > 16:
+            raise ValueError('X start address must be *01-*16.')
+        if start < 1 or start > 816:
+            raise ValueError('X start address must be in [001, 816].')
+        coil = 32 * (start // 100) + start % 100 - 1
+
+        if isinstance(data, list):
+            if len(data) > 16 * (9 - start // 100) - start % 100:
+                raise ValueError('Data list longer than available addresses.')
+            payload = []
+            if (start % 100) + len(data) > 16:
+                i = 17 - (start % 100)
+                payload += data[:i] + [False] * 16
+                data = data[i:]
+            while len(data) > 16:
+                payload += data[:16] + [False] * 16
+                data = data[16:]
+            payload += data
+            await self._request(self.modbus.write_coils(coil, payload))
+        else:
+            self._request(self.modbus.write_coil(coil, data))
 
     async def _set_y(self, start, data):
         """Sets Y addresses. Called by `set`.
