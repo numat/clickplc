@@ -349,7 +349,7 @@ class ClickPLC(object):
         race conditions.
         """
         while self.waiting:
-            asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
         self.waiting = True
         try:
             return await asyncio.wait_for(future, timeout=self.timeout)
