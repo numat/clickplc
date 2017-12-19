@@ -107,7 +107,9 @@ class ClickPLC(object):
 
     async def _connect(self):
         """Starts asynchronous reconnect loop."""
+        self.waiting = True
         await self.client.start(self.ip)
+        self.waiting = False
         if self.client.protocol is None:
             raise IOError("Could not connect to '{}'.".format(self.ip))
         self.modbus = self.client.protocol
@@ -149,7 +151,7 @@ class ClickPLC(object):
             end_coil = 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils(start_coil, count))
+        coils = await self._request(self.modbus.read_coils, (start_coil, count))  # noqa
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -200,7 +202,7 @@ class ClickPLC(object):
             end_coil = 8192 + 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils(start_coil, count))
+        coils = await self._request(self.modbus.read_coils, (start_coil, count))  # noqa
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -235,10 +237,10 @@ class ClickPLC(object):
         count = 2 * (1 if end is None else (end - start + 1))
         registers = []
         while count > 124:
-            r = await self._request(self.modbus.read_holding_registers(address, 124))  # noqa
+            r = await self._request(self.modbus.read_holding_registers, (address, 124))  # noqa
             registers += r.registers
             address, count = address + 124, count - 124
-        r = await self._request(self.modbus.read_holding_registers(address, count))  # noqa
+        r = await self._request(self.modbus.read_holding_registers, (address, count))  # noqa
         registers += r.registers
         register_bytes = b''.join(pack('<H', x) for x in registers)
         decoder = BinaryPayloadDecoder(register_bytes)
@@ -271,9 +273,9 @@ class ClickPLC(object):
                 payload += data[:16] + [False] * 16
                 data = data[16:]
             payload += data
-            await self._request(self.modbus.write_coils(coil, payload))
+            await self._request(self.modbus.write_coils, (coil, payload))
         else:
-            self._request(self.modbus.write_coil(coil, data))
+            self._request(self.modbus.write_coil, (coil, data))
 
     async def _set_y(self, start, data):
         """Sets Y addresses. Called by `set`.
@@ -299,9 +301,9 @@ class ClickPLC(object):
                 payload += data[:16] + [False] * 16
                 data = data[16:]
             payload += data
-            await self._request(self.modbus.write_coils(coil, payload))
+            await self._request(self.modbus.write_coils, (coil, payload))
         else:
-            self._request(self.modbus.write_coil(coil, data))
+            self._request(self.modbus.write_coil, (coil, data))
 
     async def _set_df(self, start, data):
         """Sets DF registers. Called by `set`.
@@ -338,7 +340,7 @@ class ClickPLC(object):
         else:
             await self.modbus.write_registers(address, _pack(data), skip_encode=True)  # noqa
 
-    async def _request(self, future):
+    async def _request(self, function, args):
         """Sends a request to the ClickPLC and awaits a response.
 
         Mainly, this ensures that requests are sent serially, as the Modbus
@@ -350,6 +352,12 @@ class ClickPLC(object):
         """
         while self.waiting:
             await asyncio.sleep(0.1)
+        if not self.open:
+            raise TimeoutError("Not connected to PLC.")
+        try:
+            future = function(*args)
+        except AttributeError:
+            raise TimeoutError("Not connected to PLC.")
         self.waiting = True
         try:
             return await asyncio.wait_for(future, timeout=self.timeout)
