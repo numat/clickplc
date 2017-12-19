@@ -362,6 +362,11 @@ class ClickPLC(object):
         try:
             return await asyncio.wait_for(future, timeout=self.timeout)
         except asyncio.TimeoutError as e:
+            if self.open:
+                # This came from reading through the pymodbus@python3 source
+                # Problem was that the driver was not detecting disconnect
+                self.client.protocol_lost_connection(self.modbus)
+                self.open = False
             raise TimeoutError(e)
         finally:
             self.waiting = False
