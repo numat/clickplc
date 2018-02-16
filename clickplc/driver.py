@@ -1,13 +1,11 @@
-"""
-Asyncio Python driver for Koyo Click PLCs.
-"""
+"""Asyncio Python driver for Koyo Click PLCs."""
 import asyncio
 from platform import python_version
 from struct import pack
 
 try:
     from pymodbus.client.async_asyncio import ReconnectingAsyncioModbusTcpClient  # noqa
-except:
+except Exception:
     raise ImportError("This driver requires a branch of pymodbus to run "
                       "correctly. Install with `pip install git+https://"
                       "github.com/riptideio/pymodbus.git@python3`.")
@@ -24,10 +22,11 @@ class ClickPLC(object):
     This interface handles the quirks of both Modbus TCP/IP and the ClickPLC,
     abstracting corner cases and providing a simple asynchronous interface.
     """
+
     supported = ['x', 'y', 'df']
 
     def __init__(self, address, timeout=1, loop=None):
-        """Sets up communication parameters."""
+        """Set up communication parameters."""
         self.ip = address
         self.timeout = timeout
         self.client = ReconnectingAsyncioModbusTcpClient()
@@ -36,7 +35,7 @@ class ClickPLC(object):
         self.waiting = False
 
     async def get(self, address):
-        """Gets variables from the ClickPLC.
+        """Get variables from the ClickPLC.
 
         Args:
             address: ClickPLC address(es) to get. Specify a range with a
@@ -73,7 +72,7 @@ class ClickPLC(object):
         return await getattr(self, '_get_' + category)(start_index, end_index)
 
     async def set(self, address, data):
-        """Sets values on the ClickPLC.
+        """Set values on the ClickPLC.
 
         Args:
             address: ClickPLC address to set. If `data` is a list, it will set
@@ -100,13 +99,13 @@ class ClickPLC(object):
         return await getattr(self, '_set_' + category)(index, data)
 
     def close(self):
-        """Closes the TCP connection."""
+        """Close the TCP connection."""
         self.client.close()
         self.open = False
         self.waiting = False
 
     async def _connect(self):
-        """Starts asynchronous reconnect loop."""
+        """Start asynchronous reconnect loop."""
         self.waiting = True
         await self.client.start(self.ip)
         self.waiting = False
@@ -116,7 +115,7 @@ class ClickPLC(object):
         self.open = True
 
     async def _get_x(self, start, end):
-        """Reads X addresses. Called by `get`.
+        """Read X addresses. Called by `get`.
 
         X entries start at 0 (1 in the Click software's 1-indexed
         notation). This function also handles some of the quirks of the unit.
@@ -167,7 +166,7 @@ class ClickPLC(object):
         return output
 
     async def _get_y(self, start, end):
-        """Reads Y addresses. Called by `get`.
+        """Read Y addresses. Called by `get`.
 
         Y entries start at 8192 (8193 in the Click software's 1-indexed
         notation). This function also handles some of the quirks of the unit.
@@ -218,7 +217,7 @@ class ClickPLC(object):
         return output
 
     async def _get_df(self, start, end):
-        """Reads DF registers. Called by `get`.
+        """Read DF registers. Called by `get`.
 
         DF entries start at Modbus address 28672 (28673 in the Click software's
         1-indexed notation). Each DF entry takes 32 bits, or 2 16-bit
@@ -250,7 +249,7 @@ class ClickPLC(object):
                 for n in range(start, end + 1)}
 
     async def _set_x(self, start, data):
-        """Sets X addresses. Called by `set`.
+        """Set X addresses. Called by `set`.
 
         For more information on the quirks of X coils, read the `_get_x`
         docstring.
@@ -278,7 +277,7 @@ class ClickPLC(object):
             self._request(self.modbus.write_coil, (coil, data))
 
     async def _set_y(self, start, data):
-        """Sets Y addresses. Called by `set`.
+        """Set Y addresses. Called by `set`.
 
         For more information on the quirks of Y coils, read the `_get_y`
         docstring.
@@ -306,7 +305,7 @@ class ClickPLC(object):
             self._request(self.modbus.write_coil, (coil, data))
 
     async def _set_df(self, start, data):
-        """Sets DF registers. Called by `set`.
+        """Set DF registers. Called by `set`.
 
         For more information on the quirks of DF registers, read the
         `_get_df` docstring.
@@ -341,7 +340,7 @@ class ClickPLC(object):
             await self.modbus.write_registers(address, _pack(data), skip_encode=True)  # noqa
 
     async def _request(self, function, args):
-        """Sends a request to the ClickPLC and awaits a response.
+        """Send a request to the ClickPLC and awaits a response.
 
         Mainly, this ensures that requests are sent serially, as the Modbus
         protocol does not allow simultaneous requests (it'll ignore any

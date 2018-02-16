@@ -9,6 +9,7 @@ from clickplc.driver import ClickPLC
 
 
 def command_line():
+    """Command-line tool for ClickPLC communication."""
     import argparse
     import asyncio
     import json
