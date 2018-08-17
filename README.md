@@ -11,7 +11,7 @@ Installation
 ============
 
 ```
-pip install git+https://github.com/riptideio/pymodbus.git@python3
+pip install git+https://github.com/riptideio/pymodbus.git@dev
 pip install clickplc
 ```
 

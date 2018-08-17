@@ -6,7 +6,7 @@ if python_version() < '3.5':
 
 setup(
     name="clickplc",
-    version="0.1.6",
+    version="0.1.7",
     description="Python driver for Koyo Ethernet ClickPLCs.",
     url="http://github.com/numat/clickplc/",
     author="Patrick Fuller",
