@@ -1,7 +1,6 @@
 """Asyncio Python driver for Koyo Click PLCs."""
 import asyncio
 from platform import python_version
-from struct import pack
 
 try:
     from pymodbus.client.async.asyncio import ReconnectingAsyncioModbusTcpClient  # noqa
@@ -241,8 +240,9 @@ class ClickPLC(object):
             address, count = address + 124, count - 124
         r = await self._request(self.modbus.read_holding_registers, (address, count))  # noqa
         registers += r.registers
-        register_bytes = b''.join(pack('<H', x) for x in registers)
-        decoder = BinaryPayloadDecoder(register_bytes)
+        decoder = BinaryPayloadDecoder.fromRegisters(registers,
+                                                     byteorder=Endian.Big,
+                                                     wordorder=Endian.Little)
         if end is None:
             return decoder.decode_32bit_float()
         return {'df{:d}'.format(n): decoder.decode_32bit_float()
