@@ -1,7 +1,7 @@
 clickplc
 ========
 
-Python driver for [Koyo Ethernet ClickPLCs](https://www.automationdirect.com/adc/Overview/Catalog/Programmable_Controllers/CLICK_Series_PLCs_(Stackable_Micro_Brick)).
+Python ≥3.5 driver and command-line tool for [Koyo Ethernet ClickPLCs](https://www.automationdirect.com/adc/Overview/Catalog/Programmable_Controllers/CLICK_Series_PLCs_(Stackable_Micro_Brick)).
 
 <p align="center">
   <img src="https://www.automationdirect.com/microsites/clickplcs/images/expandedclick.jpg" />
@@ -11,12 +11,11 @@ Installation
 ============
 
 ```
-pip install git+https://github.com/riptideio/pymodbus.git@dev
 pip install clickplc
 ```
 
-The dependency install is due to an [unmerged branch of pymodbus](https://github.com/riptideio/pymodbus/pull/72#issuecomment-332711442)
-for asyncio support. This will be rolled into `setup.py` once the branch is merged with master.
+Because of [riptideio/pymodbus#320](https://github.com/riptideio/pymodbus/issues/320),
+this does not currently work with Python 3.7.
 
 Usage
 =====
@@ -32,7 +31,7 @@ this as needed. However, you'll likely want the python functionality below.
 
 ### Python
 
-This uses Python >=3.5's async/await syntax to asynchronously communicate with
+This uses Python ≥3.5's async/await syntax to asynchronously communicate with
 a ClickPLC. For example:
 
 ```python
