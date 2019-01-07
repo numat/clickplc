@@ -4,7 +4,7 @@ from setuptools import setup
 if python_version() < '3.5':
     raise ImportError("This module requires Python >=3.5")
 
-if not python_version() > '3.7':
+if python_version() > '3.7':
     raise ImportError("This module requires Python <3.7")
 
 setup(

@@ -1,14 +1,9 @@
 """Asyncio Python driver for Koyo Click PLCs."""
 import asyncio
-from platform import python_version
 
 from pymodbus.client.async.asyncio import ReconnectingAsyncioModbusTcpClient
-
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
-
-if python_version() < '3.5':
-    raise ImportError("This module requires Python >=3.5")
 
 
 class ClickPLC(object):
