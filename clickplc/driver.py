@@ -319,9 +319,10 @@ class ClickPLC(object):
         address = 28672 + 2 * (start - 1)
 
         def _pack(value):
-            builder = BinaryPayloadBuilder(endian=Endian.Big)
+            builder = BinaryPayloadBuilder(byteorder=Endian.Big,
+                                           wordorder=Endian.Little)
             builder.add_32bit_float(float(value))
-            return builder.build()[::-1]
+            return builder.build()
 
         if isinstance(data, list):
             if len(data) > 500 - start:
