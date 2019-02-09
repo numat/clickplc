@@ -23,12 +23,12 @@ class ClickPLC(object):
         self.open = False
         self.waiting = False
 
-    def __aenter__(self):
+    async def __aenter__(self):
         """Asynchronously connect with the context manager."""
         await self._connect()
         return self
 
-    def __aexit__(self, *args):
+    async def __aexit__(self, *args):
         """Provide exit to the context manager."""
         self.close()
 
