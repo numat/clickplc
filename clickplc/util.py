@@ -6,7 +6,7 @@ Copyright (C) 2019 NuMat Technologies
 import asyncio
 
 from pymodbus.client.asynchronous.asyncio import ReconnectingAsyncioModbusTcpClient
-import pymodbus.exceptions.ConnectionException
+import pymodbus.exceptions
 
 
 class AsyncioModbusClient(object):
