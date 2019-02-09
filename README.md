@@ -14,9 +14,6 @@ Installation
 pip install clickplc
 ```
 
-Because of [riptideio/pymodbus#320](https://github.com/riptideio/pymodbus/issues/320),
-this does not currently work with Python 3.7.
-
 Usage
 =====
 
@@ -35,15 +32,14 @@ This uses Python ≥3.5's async/await syntax to asynchronously communicate with
 a ClickPLC. For example:
 
 ```python
+import asyncio
 from clickplc import ClickPLC
-plc = ClickPLC('the-plc-ip-address')
 
 async def get():
-    print(await plc.get('df1-df500'))
+    async with ClickPLC('the-plc-ip-address') as plc:
+        print(await plc.get('df1-df500'))
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(get())
-loop.close()
+asyncio.run(get())
 ```
 
 The entire API is `get` and `set`, and takes a range of inputs:

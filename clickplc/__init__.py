@@ -19,17 +19,14 @@ def command_line():
     parser.add_argument('address', help="The IP address of the ClickPLC.")
     args = parser.parse_args()
 
-    plc = ClickPLC(args.address)
-
     async def get():
-        d = await plc.get('x001-x816')
-        d.update(await plc.get('y001-y816'))
-        d.update(await plc.get('df1-df500'))
-        print(json.dumps(d, indent=4))
+        async with ClickPLC(args.address) as plc:
+            d = await plc.get('x001-x816')
+            d.update(await plc.get('y001-y816'))
+            d.update(await plc.get('df1-df500'))
+            print(json.dumps(d, indent=4))
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(get())
-    loop.close()
+    asyncio.run(get())
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 """Asyncio Python driver for Koyo Click PLCs."""
 import asyncio
 
-from pymodbus.client.async.asyncio import ReconnectingAsyncioModbusTcpClient
+from pymodbus.client.asynchronous.asyncio import ReconnectingAsyncioModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 
@@ -15,14 +15,22 @@ class ClickPLC(object):
 
     supported = ['x', 'y', 'df']
 
-    def __init__(self, address, timeout=1, loop=None):
+    def __init__(self, address, timeout=1):
         """Set up communication parameters."""
         self.ip = address
         self.timeout = timeout
         self.client = ReconnectingAsyncioModbusTcpClient()
-        self.loop = loop or asyncio.get_event_loop()
         self.open = False
         self.waiting = False
+
+    def __aenter__(self):
+        """Asynchronously connect with the context manager."""
+        await self._connect()
+        return self
+
+    def __aexit__(self, *args):
+        """Provide exit to the context manager."""
+        self.close()
 
     async def get(self, address):
         """Get variables from the ClickPLC.
@@ -140,7 +148,7 @@ class ClickPLC(object):
             end_coil = 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils, (start_coil, count))  # noqa
+        coils = await self._request(self.modbus.read_coils, (start_coil, count))
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -191,7 +199,7 @@ class ClickPLC(object):
             end_coil = 8192 + 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils, (start_coil, count))  # noqa
+        coils = await self._request(self.modbus.read_coils, (start_coil, count))
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -226,10 +234,10 @@ class ClickPLC(object):
         count = 2 * (1 if end is None else (end - start + 1))
         registers = []
         while count > 124:
-            r = await self._request(self.modbus.read_holding_registers, (address, 124))  # noqa
+            r = await self._request(self.modbus.read_holding_registers, (address, 124))
             registers += r.registers
             address, count = address + 124, count - 124
-        r = await self._request(self.modbus.read_holding_registers, (address, count))  # noqa
+        r = await self._request(self.modbus.read_holding_registers, (address, count))
         registers += r.registers
         decoder = BinaryPayloadDecoder.fromRegisters(registers,
                                                      byteorder=Endian.Big,
@@ -324,12 +332,12 @@ class ClickPLC(object):
                 raise ValueError('Data list longer than available addresses.')
             while len(data) > 62:
                 payload = sum((_pack(d) for d in data[:62]), [])
-                await self.modbus.write_registers(address, payload, skip_encode=True)  # noqa
+                await self.modbus.write_registers(address, payload, skip_encode=True)
                 address, data = address + 124, data[62:]
             payload = sum((_pack(d) for d in data), [])
-            await self.modbus.write_registers(address, payload, skip_encode=True)  # noqa
+            await self.modbus.write_registers(address, payload, skip_encode=True)
         else:
-            await self.modbus.write_registers(address, _pack(data), skip_encode=True)  # noqa
+            await self.modbus.write_registers(address, _pack(data), skip_encode=True)
 
     async def _request(self, function, args):
         """Send a request to the ClickPLC and awaits a response.
