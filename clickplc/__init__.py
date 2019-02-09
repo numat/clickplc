@@ -26,7 +26,9 @@ def command_line():
             d.update(await plc.get('df1-df500'))
             print(json.dumps(d, indent=4))
 
-    asyncio.run(get())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(get())
+    loop.close()
 
 
 if __name__ == '__main__':
