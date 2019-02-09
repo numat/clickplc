@@ -98,7 +98,7 @@ class ClickPLC(object):
 
     def close(self):
         """Close the TCP connection."""
-        self.client.close()
+        self.client.stop()
         self.open = False
         self.waiting = False
 
