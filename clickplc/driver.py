@@ -1,12 +1,16 @@
-"""Asyncio Python driver for Koyo Click PLCs."""
-import asyncio
+"""
+A Python driver for Koyo ClickPLC ethernet units.
 
-from pymodbus.client.asynchronous.asyncio import ReconnectingAsyncioModbusTcpClient
+Distributed under the GNU General Public License v2
+Copyright (C) 2019 NuMat Technologies
+"""
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 
+from clickplc.util import AsyncioModbusClient
 
-class ClickPLC(object):
+
+class ClickPLC(AsyncioModbusClient):
     """Ethernet driver for the Koyo ClickPLC.
 
     This interface handles the quirks of both Modbus TCP/IP and the ClickPLC,
@@ -14,23 +18,6 @@ class ClickPLC(object):
     """
 
     supported = ['x', 'y', 'df']
-
-    def __init__(self, address, timeout=1):
-        """Set up communication parameters."""
-        self.ip = address
-        self.timeout = timeout
-        self.client = ReconnectingAsyncioModbusTcpClient()
-        self.open = False
-        self.waiting = False
-
-    async def __aenter__(self):
-        """Asynchronously connect with the context manager."""
-        await self._connect()
-        return self
-
-    async def __aexit__(self, *args):
-        """Provide exit to the context manager."""
-        self.close()
 
     async def get(self, address):
         """Get variables from the ClickPLC.
@@ -50,9 +37,6 @@ class ClickPLC(object):
         This uses the ClickPLC's internal variable notation, which can be
         found in the Address Picker of the ClickPLC software.
         """
-        if not self.open:
-            await self._connect()
-
         if '-' in address:
             start, end = address.split('-')
         else:
@@ -84,9 +68,6 @@ class ClickPLC(object):
         This uses the ClickPLC's internal variable notation, which can be
         found in the Address Picker of the ClickPLC software.
         """
-        if not self.open:
-            await self._connect()
-
         if not isinstance(data, list):
             data = [data]
 
@@ -95,22 +76,6 @@ class ClickPLC(object):
         if category not in self.supported:
             raise ValueError("{} currently unsupported.".format(category))
         return await getattr(self, '_set_' + category)(index, data)
-
-    def close(self):
-        """Close the TCP connection."""
-        self.client.stop()
-        self.open = False
-        self.waiting = False
-
-    async def _connect(self):
-        """Start asynchronous reconnect loop."""
-        self.waiting = True
-        await self.client.start(self.ip)
-        self.waiting = False
-        if self.client.protocol is None:
-            raise IOError("Could not connect to '{}'.".format(self.ip))
-        self.modbus = self.client.protocol
-        self.open = True
 
     async def _get_x(self, start, end):
         """Read X addresses. Called by `get`.
@@ -148,7 +113,7 @@ class ClickPLC(object):
             end_coil = 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils, (start_coil, count))
+        coils = await self.read_coils(start_coil, count)
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -199,7 +164,7 @@ class ClickPLC(object):
             end_coil = 8192 + 32 * (end // 100) + end % 100 - 1
             count = end_coil - start_coil + 1
 
-        coils = await self._request(self.modbus.read_coils, (start_coil, count))
+        coils = await self.read_coils(start_coil, count)
         if count == 1:
             return coils.bits[0]
         output = {}
@@ -220,10 +185,6 @@ class ClickPLC(object):
         DF entries start at Modbus address 28672 (28673 in the Click software's
         1-indexed notation). Each DF entry takes 32 bits, or 2 16-bit
         registers.
-
-        The Modbus protocol doesn't allow responses longer than 250 bytes
-        (ie. 125 registers, 62 DF addresses), which this function manages by
-        chunking larger requests.
         """
         if start < 1 or start > 500:
             raise ValueError('DF must be in [1, 500]')
@@ -232,20 +193,13 @@ class ClickPLC(object):
 
         address = 28672 + 2 * (start - 1)
         count = 2 * (1 if end is None else (end - start + 1))
-        registers = []
-        while count > 124:
-            r = await self._request(self.modbus.read_holding_registers, (address, 124))
-            registers += r.registers
-            address, count = address + 124, count - 124
-        r = await self._request(self.modbus.read_holding_registers, (address, count))
-        registers += r.registers
+        registers = await self.read_registers(address, count)
         decoder = BinaryPayloadDecoder.fromRegisters(registers,
                                                      byteorder=Endian.Big,
                                                      wordorder=Endian.Little)
         if end is None:
             return decoder.decode_32bit_float()
-        return {'df{:d}'.format(n): decoder.decode_32bit_float()
-                for n in range(start, end + 1)}
+        return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
     async def _set_x(self, start, data):
         """Set X addresses. Called by `set`.
@@ -271,9 +225,9 @@ class ClickPLC(object):
                 payload += data[:16] + [False] * 16
                 data = data[16:]
             payload += data
-            await self._request(self.modbus.write_coils, (coil, payload))
+            await self.write_coils(coil, payload)
         else:
-            self._request(self.modbus.write_coil, (coil, data))
+            await self.write_coil(coil, data)
 
     async def _set_y(self, start, data):
         """Set Y addresses. Called by `set`.
@@ -299,17 +253,14 @@ class ClickPLC(object):
                 payload += data[:16] + [False] * 16
                 data = data[16:]
             payload += data
-            await self._request(self.modbus.write_coils, (coil, payload))
+            await self.write_coils(coil, payload)
         else:
-            self._request(self.modbus.write_coil, (coil, data))
+            await self.write_coil(coil, data)
 
     async def _set_df(self, start, data):
         """Set DF registers. Called by `set`.
 
-        For more information on the quirks of DF registers, read the
-        `_get_df` docstring.
-
-        Additionally, the ClickPLC is little endian, but on registers instead
+        The ClickPLC is little endian, but on registers ("words") instead
         of bytes. As an example, take a random floating point number:
             Input: 0.1
             Hex: 3dcc cccd (IEEE-754 float32)
@@ -330,42 +281,7 @@ class ClickPLC(object):
         if isinstance(data, list):
             if len(data) > 500 - start:
                 raise ValueError('Data list longer than available addresses.')
-            while len(data) > 62:
-                payload = sum((_pack(d) for d in data[:62]), [])
-                await self.modbus.write_registers(address, payload, skip_encode=True)
-                address, data = address + 124, data[62:]
             payload = sum((_pack(d) for d in data), [])
-            await self.modbus.write_registers(address, payload, skip_encode=True)
+            await self.write_registers(address, payload, skip_encode=True)
         else:
-            await self.modbus.write_registers(address, _pack(data), skip_encode=True)
-
-    async def _request(self, function, args):
-        """Send a request to the ClickPLC and awaits a response.
-
-        Mainly, this ensures that requests are sent serially, as the Modbus
-        protocol does not allow simultaneous requests (it'll ignore any
-        request sent while it's processing something). The driver handles this
-        by assuming there is only one client instance. If other clients
-        exist, other logic will have to be added to either prevent or manage
-        race conditions.
-        """
-        while self.waiting:
-            await asyncio.sleep(0.1)
-        if not self.open:
-            raise TimeoutError("Not connected to PLC.")
-        try:
-            future = function(*args)
-        except AttributeError:
-            raise TimeoutError("Not connected to PLC.")
-        self.waiting = True
-        try:
-            return await asyncio.wait_for(future, timeout=self.timeout)
-        except asyncio.TimeoutError as e:
-            if self.open:
-                # This came from reading through the pymodbus@python3 source
-                # Problem was that the driver was not detecting disconnect
-                self.client.protocol_lost_connection(self.modbus)
-                self.open = False
-            raise TimeoutError(e)
-        finally:
-            self.waiting = False
+            await self.write_register(address, _pack(data), skip_encode=True)
