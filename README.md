@@ -45,16 +45,16 @@ asyncio.run(get())
 The entire API is `get` and `set`, and takes a range of inputs:
 
 ```python
->>> plc.get('df1')
+>>> await plc.get('df1')
 0.0
->>> plc.get('df1-df20')
+>>> await plc.get('df1-df20')
 {'df1': 0.0, 'df2': 0.0, ..., 'df20': 0.0}
->>> plc.get('y101-y316')
+>>> await plc.get('y101-y316')
 {'y101': False, 'y102': False, ..., 'y316': False}
 
->>> plc.set('df1', 0.0)  # Sets DF1 to 0.0
->>> plc.set('df1', [0.0, 0.0, 0.0])  # Sets DF1-DF3 to 0.0.
->>> plc.set('y101', True)  # Sets Y101 to true
+>>> await plc.set('df1', 0.0)  # Sets DF1 to 0.0
+>>> await plc.set('df1', [0.0, 0.0, 0.0])  # Sets DF1-DF3 to 0.0.
+>>> await plc.set('y101', True)  # Sets Y101 to true
 ```
 
 Currently, only X, Y, and DF are supported. I personally haven't needed to
