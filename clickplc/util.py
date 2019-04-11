@@ -102,7 +102,7 @@ class AsyncioModbusClient(object):
             await self._connect()
         while self.waiting:
             await asyncio.sleep(0.1)
-        if not self.client.protocol.connected:
+        if self.client.protocol is None or not self.client.protocol.connected:
             raise TimeoutError("Not connected to device.")
         try:
             future = getattr(self.client.protocol, method)(*args, **kwargs)
