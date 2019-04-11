@@ -115,7 +115,8 @@ class AsyncioModbusClient(object):
             if self.open:
                 # This came from reading through the pymodbus@python3 source
                 # Problem was that the driver was not detecting disconnect
-                self.client.protocol_lost_connection(self.modbus)
+                if hasattr(self, 'modbus'):
+                    self.client.protocol_lost_connection(self.modbus)
                 self.open = False
             raise TimeoutError(e)
         except pymodbus.exceptions.ConnectionException as e:
