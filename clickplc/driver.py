@@ -17,7 +17,7 @@ class ClickPLC(AsyncioModbusClient):
     abstracting corner cases and providing a simple asynchronous interface.
     """
 
-    supported = ['x', 'y', 'df']
+    supported = ['x', 'y', 'df', 'ds']
 
     async def get(self, address):
         """Get variables from the ClickPLC.
@@ -201,6 +201,27 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_float()
         return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
+    async def _get_ds(self, start, end):
+        """Read DS registers. Called by `get`.
+
+        DS entries start at Modbus address 00000 (00001 in the Click software's
+        1-indexed notation). Each DS entry takes 16 bits.
+        """
+        if start < 1 or start > 4500:
+            raise ValueError('DS must be in [1, 4500]')
+        if end is not None and (end < 1 or end > 4500):
+            raise ValueError('DS end must be in [1, 4500]')
+
+        address = start - 1
+        count = 2 * (1 if end is None else (end - start + 1))
+        registers = await self.read_registers(address, count)
+        decoder = BinaryPayloadDecoder.fromRegisters(registers,
+                                                     byteorder=Endian.Big,
+                                                     wordorder=Endian.Little)
+        if end is None:
+            return decoder.decode_16bit_int()
+        return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
+
     async def _set_x(self, start, data):
         """Set X addresses. Called by `set`.
 
@@ -280,6 +301,29 @@ class ClickPLC(AsyncioModbusClient):
 
         if isinstance(data, list):
             if len(data) > 500 - start:
+                raise ValueError('Data list longer than available addresses.')
+            payload = sum((_pack(d) for d in data), [])
+            await self.write_registers(address, payload, skip_encode=True)
+        else:
+            await self.write_register(address, _pack(data), skip_encode=True)
+
+    async def _set_ds(self, start, data):
+        """Set DS registers. Called by `set`.
+
+        See _get_ds for more information.
+        """
+        if start < 1 or start > 4500:
+            raise ValueError('DS must be in [1, 500]')
+        address = (start - 1)
+
+        def _pack(value):
+            builder = BinaryPayloadBuilder(byteorder=Endian.Big,
+                                           wordorder=Endian.Little)
+            builder.add_16bit_int(int(value))
+            return builder.build()
+
+        if isinstance(data, list):
+            if len(data) > 4500 - start:
                 raise ValueError('Data list longer than available addresses.')
             payload = sum((_pack(d) for d in data), [])
             await self.write_registers(address, payload, skip_encode=True)
