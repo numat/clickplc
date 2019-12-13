@@ -204,7 +204,7 @@ class ClickPLC(AsyncioModbusClient):
     async def _get_ds(self, start, end):
         """Read DS registers. Called by `get`.
 
-        DS entries start at Modbus address 00000 (00001 in the Click software's
+        DS entries start at Modbus address 0 (1 in the Click software's
         1-indexed notation). Each DS entry takes 16 bits.
         """
         if start < 1 or start > 4500:
@@ -213,7 +213,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DS end must be in [1, 4500]')
 
         address = start - 1
-        count = 2 * (1 if end is None else (end - start + 1))
+        count = 1 if end is None else (end - start + 1)
         registers = await self.read_registers(address, count)
         decoder = BinaryPayloadDecoder.fromRegisters(registers,
                                                      byteorder=Endian.Big,
