@@ -24,6 +24,7 @@ def command_line():
             d = await plc.get('x001-x816')
             d.update(await plc.get('y001-y816'))
             d.update(await plc.get('df1-df500'))
+            d.update(await plc.get('ds1-ds4500'))
             print(json.dumps(d, indent=4))
 
     loop = asyncio.get_event_loop()
