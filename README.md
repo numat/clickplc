@@ -23,7 +23,7 @@ Usage
 $ clickplc the-plc-ip-address
 ```
 
-This will print all the X, Y, and DF registers to stdout as JSON. You can pipe
+This will print all the X, Y, DS, and DF registers to stdout as JSON. You can pipe
 this as needed. However, you'll likely want the python functionality below.
 
 ### Python
