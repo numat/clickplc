@@ -17,7 +17,7 @@ class ClickPLC(AsyncioModbusClient):
     abstracting corner cases and providing a simple asynchronous interface.
     """
 
-    supported = ['x', 'y', 'df', 'ds']
+    supported = ['x', 'y', 'c', 'df', 'ds']
 
     async def get(self, address):
         """Get variables from the ClickPLC.
@@ -179,6 +179,33 @@ class ClickPLC(AsyncioModbusClient):
             current += 1
         return output
 
+    async def _get_c(self, start, end):
+        """Read C addresses. Called by `get`.
+
+        C entries start at 16384 (16385 in the Click software's 1-indexed
+        notation). This continues for 2000 bits, ending at 18383.
+
+        The response always returns a full byte of data. If you request
+        a number of addresses not divisible by 8, it will have extra data. The
+        extra data here is discarded before returning.
+        """
+        if start < 1 or start > 2000:
+            raise ValueError('C start address must be 1-2000.')
+
+        start_coil = 16384 + start - 1
+        if end is None:
+            count = 1
+        else:
+            if end <= start or end > 2000:
+                raise ValueError('C end address must be >start and <2000.')
+            end_coil = 16384 + end - 1
+            count = end_coil - start_coil + 1
+
+        coils = await self.read_coils(start_coil, count)
+        if count == 1:
+            return coils.bits[0]
+        return {'c{:d}'.format(start + i): bit for i, bit in enumerate(coils.bits)}
+
     async def _get_df(self, start, end):
         """Read DF registers. Called by `get`.
 
@@ -275,6 +302,23 @@ class ClickPLC(AsyncioModbusClient):
                 data = data[16:]
             payload += data
             await self.write_coils(coil, payload)
+        else:
+            await self.write_coil(coil, data)
+
+    async def _set_c(self, start, data):
+        """Set C addresses. Called by `set`.
+
+        For more information on the quirks of C coils, read the `_get_c`
+        docstring.
+        """
+        if start < 1 or start > 2000:
+            raise ValueError('C start address must be 1-2000.')
+        coil = 16384 + start - 1
+
+        if isinstance(data, list):
+            if len(data) > (2000 - start):
+                raise ValueError('Data list longer than available addresses.')
+            await self.write_coils(coil, data)
         else:
             await self.write_coil(coil, data)
 
