@@ -57,5 +57,5 @@ The entire API is `get` and `set`, and takes a range of inputs:
 >>> await plc.set('y101', True)  # Sets Y101 to true
 ```
 
-Currently, only X, Y, DS, and DF are supported. I personally haven't needed to
+Currently, only X, Y, C, DS, and DF are supported. I personally haven't needed to
 use the other categories, but they are straightforward to add if needed.
