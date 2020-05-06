@@ -57,5 +57,11 @@ The entire API is `get` and `set`, and takes a range of inputs:
 >>> await plc.set('y101', True)  # Sets Y101 to true
 ```
 
-Currently, only X, Y, C, DS, and DF are supported. I personally haven't needed to
-use the other categories, but they are straightforward to add if needed.
+Currently, only X, Y, C, DS, and DF are supported:
+| x | bool | Input point |
+| y | bool | Output point |
+| c | bool | (C)ontrol relay |
+| df | float | (D)ata register, (f)loating point |
+| ds | int16 | (D)ata register, (s)igned int |
+I personally haven't needed to use the other categories, but they are
+straightforward to add if needed.

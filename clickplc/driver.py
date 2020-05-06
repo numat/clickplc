@@ -17,7 +17,13 @@ class ClickPLC(AsyncioModbusClient):
     abstracting corner cases and providing a simple asynchronous interface.
     """
 
-    supported = ['x', 'y', 'c', 'df', 'ds']
+    data_types = {
+        'x': 'bool',    # Input point
+        'y': 'bool',    # Output point
+        'c': 'bool',    # (C)ontrol relay
+        'df': 'float',  # (D)ata register (f)loating point
+        'ds': 'int16',  # (D)ata register (s)igned int
+    }
 
     async def get(self, address):
         """Get variables from the ClickPLC.
@@ -47,7 +53,7 @@ class ClickPLC(AsyncioModbusClient):
 
         if end_index is not None and end_index < start_index:
             raise ValueError("End address must be greater than start address.")
-        if category not in self.supported:
+        if category not in self.data_types:
             raise ValueError("{} currently unsupported.".format(category))
         if end is not None and end[:i].lower() != category:
             raise ValueError("Inter-category ranges are unsupported.")
@@ -73,7 +79,7 @@ class ClickPLC(AsyncioModbusClient):
 
         i = address.index(next(s for s in address if s.isdigit()))
         category, index = address[:i].lower(), int(address[i:])
-        if category not in self.supported:
+        if category not in self.data_types:
             raise ValueError("{} currently unsupported.".format(category))
         return await getattr(self, '_set_' + category)(index, data)
 
