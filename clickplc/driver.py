@@ -2,8 +2,10 @@
 A Python driver for Koyo ClickPLC ethernet units.
 
 Distributed under the GNU General Public License v2
-Copyright (C) 2019 NuMat Technologies
+Copyright (C) 2020 NuMat Technologies
 """
+import pydoc
+from string import digits
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 
@@ -81,6 +83,11 @@ class ClickPLC(AsyncioModbusClient):
         category, index = address[:i].lower(), int(address[i:])
         if category not in self.data_types:
             raise ValueError("{} currently unsupported.".format(category))
+        data_type = self.data_types[category].rstrip(digits)
+        if isinstance(data, int) and data_type == 'float':
+            data = float(data)
+        if not isinstance(data, pydoc.locate(data_type)):
+            raise ValueError(f"Expected {address} to be a {data_type}.")
         return await getattr(self, '_set_' + category)(index, data)
 
     async def _get_x(self, start, end):
