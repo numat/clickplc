@@ -4,6 +4,8 @@ A Python driver for Koyo ClickPLC ethernet units.
 Distributed under the GNU General Public License v2
 Copyright (C) 2019 NuMat Technologies
 """
+from typing import Union, List
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 
@@ -19,7 +21,7 @@ class ClickPLC(AsyncioModbusClient):
 
     supported = ['x', 'y', 'c', 'df', 'ds']
 
-    async def get(self, address):
+    async def get(self, address: str) -> dict:
         """Get variables from the ClickPLC.
 
         Args:
@@ -77,7 +79,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError("{} currently unsupported.".format(category))
         return await getattr(self, '_set_' + category)(index, data)
 
-    async def _get_x(self, start, end):
+    async def _get_x(self, start: int, end: int) -> dict:
         """Read X addresses. Called by `get`.
 
         X entries start at 0 (1 in the Click software's 1-indexed
@@ -128,7 +130,7 @@ class ClickPLC(AsyncioModbusClient):
             current += 1
         return output
 
-    async def _get_y(self, start, end):
+    async def _get_y(self, start: int, end: int) -> dict:
         """Read Y addresses. Called by `get`.
 
         Y entries start at 8192 (8193 in the Click software's 1-indexed
@@ -179,7 +181,7 @@ class ClickPLC(AsyncioModbusClient):
             current += 1
         return output
 
-    async def _get_c(self, start, end):
+    async def _get_c(self, start: int, end: int) -> Union[dict, bool]:
         """Read C addresses. Called by `get`.
 
         C entries start at 16384 (16385 in the Click software's 1-indexed
@@ -206,7 +208,7 @@ class ClickPLC(AsyncioModbusClient):
             return coils.bits[0]
         return {'c{:d}'.format(start + i): bit for i, bit in enumerate(coils.bits)}
 
-    async def _get_df(self, start, end):
+    async def _get_df(self, start: int, end: int) -> Union[dict, float]:
         """Read DF registers. Called by `get`.
 
         DF entries start at Modbus address 28672 (28673 in the Click software's
@@ -228,7 +230,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_float()
         return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
-    async def _get_ds(self, start, end):
+    async def _get_ds(self, start: int, end: int) -> Union[dict, int]:
         """Read DS registers. Called by `get`.
 
         DS entries start at Modbus address 0 (1 in the Click software's
@@ -249,7 +251,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_16bit_int()
         return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
 
-    async def _set_x(self, start, data):
+    async def _set_x(self, start: int, data: Union[List[bool], bool]):
         """Set X addresses. Called by `set`.
 
         For more information on the quirks of X coils, read the `_get_x`
@@ -277,7 +279,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_y(self, start, data):
+    async def _set_y(self, start: int, data: Union[List[bool], bool]):
         """Set Y addresses. Called by `set`.
 
         For more information on the quirks of Y coils, read the `_get_y`
@@ -305,7 +307,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_c(self, start, data):
+    async def _set_c(self, start: int, data: Union[List[bool], bool]):
         """Set C addresses. Called by `set`.
 
         For more information on the quirks of C coils, read the `_get_c`
@@ -322,7 +324,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_df(self, start, data):
+    async def _set_df(self, start: int, data: Union[List[float], float]):
         """Set DF registers. Called by `set`.
 
         The ClickPLC is little endian, but on registers ("words") instead
@@ -351,7 +353,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_register(address, _pack(data), skip_encode=True)
 
-    async def _set_ds(self, start, data):
+    async def _set_ds(self, start: int, data: Union[List[int], int]):
         """Set DS registers. Called by `set`.
 
         See _get_ds for more information.
