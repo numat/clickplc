@@ -359,7 +359,7 @@ class ClickPLC(AsyncioModbusClient):
         See _get_ds for more information.
         """
         if start < 1 or start > 4500:
-            raise ValueError('DS must be in [1, 500]')
+            raise ValueError('DS must be in [1, 4500]')
         address = (start - 1)
 
         def _pack(value):
