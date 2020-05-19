@@ -1,0 +1,143 @@
+import asyncio
+
+import pytest
+
+from clickplc.mock import ClickPLC
+
+
+@pytest.fixture
+def plc_driver():
+    return ClickPLC('fake ip')
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('prefix', ['x', 'y'])
+async def test_bool_roundtrip(plc_driver, prefix):
+    await plc_driver.set(f'{prefix}2', True)
+    await plc_driver.set(f'{prefix}3', [False, True])
+    expected = {f'{prefix}001': False, f'{prefix}002': True, f'{prefix}003': False,
+                f'{prefix}004': True, f'{prefix}005': False}
+    assert expected == await plc_driver.get(f'{prefix}1-{prefix}5')
+
+
+@pytest.mark.asyncio
+async def test_c_roundtrip(plc_driver):
+    await plc_driver.set('c2', True)
+    await plc_driver.set('c3', [False, True])
+    expected = {'c1': False, 'c2': True, 'c3': False, 'c4': True, 'c5': False}
+    assert expected == await plc_driver.get('c1-c5')
+
+
+@pytest.mark.asyncio
+async def test_df_roundtrip(plc_driver):
+    await plc_driver.set('df2', 2.0)
+    await plc_driver.set('df3', [3.0, 4.0])
+    expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
+    assert expected == await plc_driver.get('df1-df5')
+
+
+@pytest.mark.asyncio
+async def test_ds_roundtrip(plc_driver):
+    await plc_driver.set('ds2', 2)
+    await plc_driver.set('ds3', [3, 4])
+    expected = {'ds1': 0, 'ds2': 2, 'ds3': 3, 'ds4': 4, 'ds5': 0}
+    assert expected == await plc_driver.get('ds1-ds5')
+
+
+@pytest.mark.asyncio
+async def test_get_error_handling(plc_driver):
+    with pytest.raises(ValueError, match='End address must be greater than start address.'):
+        await plc_driver.get('c3-c1')
+    with pytest.raises(ValueError, match='foo currently unsupported'):
+        await plc_driver.get('foo1')
+    with pytest.raises(ValueError, match='Inter-category ranges are unsupported.'):
+        await plc_driver.get('c1-x3')
+
+
+@pytest.mark.asyncio
+async def test_set_error_handling(plc_driver):
+    with pytest.raises(ValueError, match='foo currently unsupported'):
+        await plc_driver.set('foo1', 1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('prefix', ['x', 'y'])
+async def test_xy_error_handling(plc_driver, prefix):
+    with pytest.raises(ValueError, match='address must be \*01-\*16.'):
+        await plc_driver.get(f'{prefix}17')
+    with pytest.raises(ValueError, match='address must be in \[001, 816\].'):
+        await plc_driver.get(f'{prefix}1001')
+    with pytest.raises(ValueError, match='address must be \*01-\*16.'):
+        await plc_driver.get(f'{prefix}1-{prefix}17')
+    with pytest.raises(ValueError, match='address must be in \[001, 816\].'):
+        await plc_driver.get(f'{prefix}1-{prefix}1001')
+    with pytest.raises(ValueError, match='address must be \*01-\*16.'):
+        await plc_driver.set(f'{prefix}17', True)
+    with pytest.raises(ValueError, match='address must be in \[001, 816\].'):
+        await plc_driver.set(f'{prefix}1001', True)
+    with pytest.raises(ValueError, match='Data list longer than available addresses.'):
+        await plc_driver.set(f'{prefix}816', [True, True])
+
+
+@pytest.mark.asyncio
+async def test_c_error_handling(plc_driver):
+    with pytest.raises(ValueError, match='C start address must be 1-2000.'):
+        await plc_driver.get('c2001')
+    with pytest.raises(ValueError, match='C end address must be >start and <2000.'):
+        await plc_driver.get('c1-c2001')
+    with pytest.raises(ValueError, match='C start address must be 1-2000.'):
+        await plc_driver.set('c2001', True)
+    with pytest.raises(ValueError, match='Data list longer than available addresses.'):
+        await plc_driver.set('c2000', [True, True])
+
+
+@pytest.mark.asyncio
+async def test_df_error_handling(plc_driver):
+    with pytest.raises(ValueError, match='DF must be in \[1, 500\]'):
+        await plc_driver.get('df501')
+    with pytest.raises(ValueError, match='DF end must be in \[1, 500\]'):
+        await plc_driver.get('df1-df501')
+    with pytest.raises(ValueError, match='DF must be in \[1, 500\]'):
+        await plc_driver.set('df501', 1.0)
+    with pytest.raises(ValueError, match='Data list longer than available addresses.'):
+        await plc_driver.set('df500', [1.0, 2.0])
+
+
+@pytest.mark.asyncio
+async def test_ds_error_handling(plc_driver):
+    with pytest.raises(ValueError, match='DS must be in \[1, 4500\]'):
+        await plc_driver.get('ds4501')
+    with pytest.raises(ValueError, match='DS end must be in \[1, 4500\]'):
+        await plc_driver.get('ds1-ds4501')
+    with pytest.raises(ValueError, match='DS must be in \[1, 4500\]'):
+        await plc_driver.set('ds4501', 1)
+    with pytest.raises(ValueError, match='Data list longer than available addresses.'):
+        await plc_driver.set('ds4500', [1, 2])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('prefix', ['x', 'y', 'c'])
+async def test_bool_typechecking(plc_driver, prefix):
+    with pytest.raises(ValueError, match='Expected .+ as a bool'):
+        await plc_driver.set(f'{prefix}1', 1)
+    with pytest.raises(ValueError, match='Expected .+ as a bool'):
+        await plc_driver.set(f'{prefix}1', [1.0, 1])
+
+
+@pytest.mark.asyncio
+async def test_df_typechecking(plc_driver):
+    await plc_driver.set('df1', 1)
+    with pytest.raises(ValueError, match='Expected .+ as a float'):
+        await plc_driver.set('df1', True)
+    with pytest.raises(ValueError, match='Expected .+ as a float'):
+        await plc_driver.set('df1', [True, True])
+
+
+@pytest.mark.asyncio
+async def test_ds_typechecking(plc_driver):
+    with pytest.raises(ValueError, match='Expected .+ as a int'):
+        await plc_driver.set('ds1', 1.0)
+    with pytest.raises(ValueError, match='Expected .+ as a int'):
+        await plc_driver.set('ds1', True)
+    with pytest.raises(ValueError, match='Expected .+ as a int'):
+        await plc_driver.set('ds1', [True, True])
