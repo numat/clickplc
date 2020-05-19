@@ -10,6 +10,41 @@ def plc_driver():
     return ClickPLC('fake ip')
 
 
+@pytest.fixture
+def tagged_driver():
+    return ClickPLC('fake ip', 'tests/plc_tags.csv')
+
+@pytest.fixture
+def expected_tags():
+    return {
+        'IO2_24V_OK': {'address': {'start': 16397}, 'id': 'C13', 'type': 'bool'},
+        'IO2_Module_OK': {'address': {'start': 16396}, 'id': 'C12', 'type': 'bool'},
+        'LI_101': {'address': {'start': 428683}, 'id': 'DF6', 'type': 'float'},
+        'LI_102': {'address': {'start': 428681}, 'id': 'DF5', 'type': 'float'},
+        'P_101': {'address': {'start': 8289}, 'id': 'Y301', 'type': 'bool'},
+        'P_101_auto': {'address': {'start': 16385}, 'id': 'C1', 'type': 'bool'},
+        'P_102_auto': {'address': {'start': 16386}, 'id': 'C2', 'type': 'bool'},
+        'P_103': {'address': {'start': 8290}, 'id': 'Y302', 'type': 'bool'},
+        'TIC101_PID_ErrorCode': {'address': {'start': 400100},
+                                 'comment': 'PID Error Code',
+                                 'id': 'DS100',
+                                 'type': 'int16'},
+        'TI_101': {'address': {'start': 428673}, 'id': 'DF1', 'type': 'float'},
+        'VAHH_101_OK': {'address': {'start': 16395}, 'id': 'C11', 'type': 'bool'},
+        'VAH_101_OK': {'address': {'start': 16394}, 'id': 'C10', 'type': 'bool'},
+        'VI_101': {'address': {'start': 428685}, 'id': 'DF7', 'type': 'float'}
+    }
+
+
+def test_get_tags(tagged_driver, expected_tags):
+    assert expected_tags == tagged_driver.get_tags()
+
+
+@pytest.mark.asyncio
+async def test_get_tagged_driver(tagged_driver, expected_tags):
+    assert expected_tags.keys() == (await tagged_driver.get()).keys()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize('prefix', ['x', 'y'])
 async def test_bool_roundtrip(plc_driver, prefix):
@@ -46,11 +81,13 @@ async def test_ds_roundtrip(plc_driver):
 
 @pytest.mark.asyncio
 async def test_get_error_handling(plc_driver):
-    with pytest.raises(ValueError, match='End address must be greater than start address.'):
+    with pytest.raises(ValueError, match='An address must be supplied'):
+        await plc_driver.get()
+    with pytest.raises(ValueError, match='End address must be greater than start address'):
         await plc_driver.get('c3-c1')
     with pytest.raises(ValueError, match='foo currently unsupported'):
         await plc_driver.get('foo1')
-    with pytest.raises(ValueError, match='Inter-category ranges are unsupported.'):
+    with pytest.raises(ValueError, match='Inter-category ranges are unsupported'):
         await plc_driver.get('c1-x3')
 
 
