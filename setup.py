@@ -24,6 +24,12 @@ setup(
     install_requires=[
         'pymodbus==2.2.0'
     ],
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+        ],
+    },
     license='GPLv2',
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',

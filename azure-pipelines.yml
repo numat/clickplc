@@ -1,0 +1,45 @@
+# Python Django
+# Test a Django project on multiple versions of Python.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+strategy:
+  matrix:
+    Python37:
+      PYTHON_VERSION: '3.7'
+  maxParallel: 3
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(PYTHON_VERSION)'
+    architecture: 'x64'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install '.[test]'
+  displayName: 'Install dependencies'
+
+- script: |
+    cd clickplc
+    pytest --junitxml=../reports/test-coverage.xml  --cov=. --cov-report=xml
+  env:
+    USER_TOKEN: $(USER_TOKEN)
+  displayName: 'Run tests'
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: 'reports/test-coverage.xml'
+    testRunTitle: '$(Agent.OS) - $(Build.BuildNumber)[$(Agent.JobName)] - Python $(python.version)'
+  condition: succeededOrFailed()
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
