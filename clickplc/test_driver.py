@@ -6,10 +6,11 @@ from clickplc.mock import ClickPLC
 
 
 class TestClickPLC(TestCase):
-    """Test the functionality of the ClickPLC dirve
+    """Test the functionality of the ClickPLC driver.
 
     Tests use the mocked version of the driver which replaces remote communications
-    with a local data store"""
+    with a local data store
+    """
 
     @classmethod
     def setUp(cls):
@@ -66,17 +67,17 @@ class TestClickPLC(TestCase):
             self.set('foo1', 1)
 
     def xy_error_handling(self, prefix):
-        with self.assertRaisesRegex(ValueError, 'address must be \*01-\*16.'):
+        with self.assertRaisesRegex(ValueError, 'address must be \\*01-\\*16.'):
             self.get(f'{prefix}17')
-        with self.assertRaisesRegex(ValueError, 'address must be in \[001, 816\].'):
+        with self.assertRaisesRegex(ValueError, 'address must be in \\[001, 816\\].'):
             self.get(f'{prefix}1001')
-        with self.assertRaisesRegex(ValueError, 'address must be \*01-\*16.'):
+        with self.assertRaisesRegex(ValueError, 'address must be \\*01-\\*16.'):
             self.get(f'{prefix}1-{prefix}17')
-        with self.assertRaisesRegex(ValueError, 'address must be in \[001, 816\].'):
+        with self.assertRaisesRegex(ValueError, 'address must be in \\[001, 816\\].'):
             self.get(f'{prefix}1-{prefix}1001')
-        with self.assertRaisesRegex(ValueError, 'address must be \*01-\*16.'):
+        with self.assertRaisesRegex(ValueError, 'address must be \\*01-\\*16.'):
             self.set(f'{prefix}17', True)
-        with self.assertRaisesRegex(ValueError, 'address must be in \[001, 816\].'):
+        with self.assertRaisesRegex(ValueError, 'address must be in \\[001, 816\\].'):
             self.set(f'{prefix}1001', True)
         with self.assertRaisesRegex(ValueError, 'Data list longer than available addresses.'):
             self.set(f'{prefix}816', [True, True])
@@ -98,21 +99,21 @@ class TestClickPLC(TestCase):
             self.set('c2000', [True, True])
 
     def test_df_error_handling(self):
-        with self.assertRaisesRegex(ValueError, 'DF must be in \[1, 500\]'):
+        with self.assertRaisesRegex(ValueError, 'DF must be in \\[1, 500\\]'):
             self.get('df501')
-        with self.assertRaisesRegex(ValueError, 'DF end must be in \[1, 500\]'):
+        with self.assertRaisesRegex(ValueError, 'DF end must be in \\[1, 500\\]'):
             self.get('df1-df501')
-        with self.assertRaisesRegex(ValueError, 'DF must be in \[1, 500\]'):
+        with self.assertRaisesRegex(ValueError, 'DF must be in \\[1, 500\\]'):
             self.set('df501', 1.0)
         with self.assertRaisesRegex(ValueError, 'Data list longer than available addresses.'):
             self.set('df500', [1.0, 2.0])
 
     def test_ds_error_handling(self):
-        with self.assertRaisesRegex(ValueError, 'DS must be in \[1, 4500\]'):
+        with self.assertRaisesRegex(ValueError, 'DS must be in \\[1, 4500\\]'):
             self.get('ds4501')
-        with self.assertRaisesRegex(ValueError, 'DS end must be in \[1, 4500\]'):
+        with self.assertRaisesRegex(ValueError, 'DS end must be in \\[1, 4500\\]'):
             self.get('ds1-ds4501')
-        with self.assertRaisesRegex(ValueError, 'DS must be in \[1, 4500\]'):
+        with self.assertRaisesRegex(ValueError, 'DS must be in \\[1, 4500\\]'):
             self.set('ds4501', 1)
         with self.assertRaisesRegex(ValueError, 'Data list longer than available addresses.'):
             self.set('ds4500', [1, 2])
