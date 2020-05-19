@@ -86,10 +86,11 @@ class ClickPLC(AsyncioModbusClient):
         if category not in self.data_types:
             raise ValueError(f"{category} currently unsupported.")
         data_type = self.data_types[category].rstrip(digits)
-        if isinstance(data, int) and data_type == 'float':
-            data = float(data)
-        if not isinstance(data, pydoc.locate(data_type)):
-            raise ValueError(f"Expected {address} to be a {data_type}.")
+        for datum in data:
+            if isinstance(datum, int) and data_type == 'float':
+                datum = float(datum)
+                if not isinstance(datum, pydoc.locate(data_type)):
+                    raise ValueError(f"Expected {address} as a {data_type}.")
         return await getattr(self, '_set_' + category)(index, data)
 
     async def _get_x(self, start: int, end: int) -> dict:
