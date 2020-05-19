@@ -40,9 +40,18 @@ def test_get_tags(tagged_driver, expected_tags):
     assert expected_tags == tagged_driver.get_tags()
 
 
+def test_unsupported_tags():
+    with pytest.raises(TypeError, match='unsupported data type'):
+        ClickPLC('fake ip', 'tests/bad_tags.csv')
+
+
 @pytest.mark.asyncio
-async def test_get_tagged_driver(tagged_driver, expected_tags):
-    assert expected_tags.keys() == (await tagged_driver.get()).keys()
+async def test_tagged_driver(tagged_driver, expected_tags):
+    await tagged_driver.set('VAH_101_OK', True)
+    state = await tagged_driver.get()
+    assert state.get('VAH_101_OK') is True
+    assert expected_tags.keys() == state.keys()
+
 
 
 @pytest.mark.asyncio

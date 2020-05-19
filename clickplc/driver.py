@@ -115,11 +115,15 @@ class ClickPLC(AsyncioModbusClient):
 
         >>> plc.set('df1', 0.0)  # Sets DF1 to 0.0
         >>> plc.set('df1', [0.0, 0.0, 0.0])  # Sets DF1-DF3 to 0.0.
-        >>> plc.set('y101', True)  # Sets Y101 to true
+        >>> plc.set('AV-101', True)  # Sets address nicknamed AV-101 to true
 
         This uses the ClickPLC's internal variable notation, which can be
-        found in the Address Picker of the ClickPLC software.
+        found in the Address Picker of the ClickPLC software. If a tags file
+        was loaded at driver initalization, nicknames can be used instead.
         """
+        if address in self.tags:
+            address = self.tags[address]['id']
+
         if not isinstance(data, list):
             data = [data]
 
@@ -464,7 +468,7 @@ class ClickPLC(AsyncioModbusClient):
             if not data['type']:
                 raise TypeError(
                     f"{data['id']} is an unsupported data type. Open a "
-                    "github issue at numat/productivity to get it added."
+                    "github issue at numat/clickplc to get it added."
                 )
         sorted_tags = {k: parsed[k] for k in
                        sorted(parsed, key=lambda k: parsed[k]['address']['start'])}
