@@ -82,7 +82,7 @@ class ClickPLC(AsyncioModbusClient):
         i = address.index(next(s for s in address if s.isdigit()))
         category, index = address[:i].lower(), int(address[i:])
         if category not in self.data_types:
-            raise ValueError("{} currently unsupported.".format(category))
+            raise ValueError(f"{category} currently unsupported.")
         data_type = self.data_types[category].rstrip(digits)
         if isinstance(data, int) and data_type == 'float':
             data = float(data)
@@ -135,7 +135,7 @@ class ClickPLC(AsyncioModbusClient):
             if current > end:
                 break
             elif current % 100 <= 16:
-                output['x{:03d}'.format(current)] = bit
+                output[f'x{current:03}'] = bit
             elif current % 100 == 32:
                 current += 100 - 32
             current += 1
@@ -186,7 +186,7 @@ class ClickPLC(AsyncioModbusClient):
             if current > end:
                 break
             elif current % 100 <= 16:
-                output['y{:03d}'.format(current)] = bit
+                output[f'y{current:03}' = bit
             elif current % 100 == 32:
                 current += 100 - 32
             current += 1
@@ -217,7 +217,7 @@ class ClickPLC(AsyncioModbusClient):
         coils = await self.read_coils(start_coil, count)
         if count == 1:
             return coils.bits[0]
-        return {'c{:d}'.format(start + i): bit for i, bit in enumerate(coils.bits)}
+        return {f'c{(start + i}': bit for i, bit in enumerate(coils.bits)}
 
     async def _get_df(self, start, end):
         """Read DF registers. Called by `get`.
