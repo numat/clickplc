@@ -188,7 +188,7 @@ class ClickPLC(AsyncioModbusClient):
             if current > end:
                 break
             elif current % 100 <= 16:
-                output[f'y{current:03}' = bit
+                output[f'y{current:03}'] = bit
             elif current % 100 == 32:
                 current += 100 - 32
             current += 1
