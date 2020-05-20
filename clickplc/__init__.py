@@ -15,10 +15,10 @@ def command_line():
     import json
 
     parser = argparse.ArgumentParser(description="Control a ClickPLC from "
-                                     "the command line.")
-    parser.add_argument('address', help="The IP address of the ClickPLC.")
+                                     "the command line")
+    parser.add_argument('address', help="The IP address of the ClickPLC")
     parser.add_argument('tags_file', default=None,
-                        help="Optional: Path to a tags file for this PLC" )
+                        help="Optional: Path to a tags file for this PLC")
     args = parser.parse_args()
 
     async def get():

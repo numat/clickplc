@@ -86,8 +86,8 @@ class ClickPLC(AsyncioModbusClient):
             results = {}
             for category, address in self.active_addresses.items():
                 results.update(await getattr(self, '_get_' + category)(address['min'], address['max']))
-            return {nickname: results[tag_info['id'].lower()]
-                    for nickname, tag_info in self.tags.items()}
+            return {tag_name: results[tag_info['id'].lower()]
+                    for tag_name, tag_info in self.tags.items()}
 
         if '-' in address:
             start, end = address.split('-')
@@ -115,7 +115,7 @@ class ClickPLC(AsyncioModbusClient):
 
         >>> plc.set('df1', 0.0)  # Sets DF1 to 0.0
         >>> plc.set('df1', [0.0, 0.0, 0.0])  # Sets DF1-DF3 to 0.0.
-        >>> plc.set('AV-101', True)  # Sets address nicknamed AV-101 to true
+        >>> plc.set('myTagNickname', True)  # Sets address named myTagNickname to true
 
         This uses the ClickPLC's internal variable notation, which can be
         found in the Address Picker of the ClickPLC software. If a tags file

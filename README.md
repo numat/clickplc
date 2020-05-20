@@ -57,12 +57,18 @@ The entire API is `get` and `set`, and takes a range of inputs:
 >>> await plc.set('y101', True)  # Sets Y101 to true
 ```
 
-If a path is provided to a tags file when the driver is initialized, 
-tag nicknames can be used to set values and calling `.get()` without
-arguments returns all named tags.
+#### Using named tags
+
+The ClickPLC software provides the ability to export a file containing all the addresses in use
+along with their user assign nicknames. To export this file, open the Address Picker, select 
+"Display MODBUS address" and export the file. 
+![Export Tags](tags_export.png)
+If a path to this tags file is provided when the 
+driver is initialized, tag nicknames can be used to set values. Calling `.get()` without
+arguments will return all named tags.
 ```python
 async with ClickPLC('the-plc-ip-address', 'path-to-tags-csv') as plc:
-        await plc.set('Tag Nickname', True)
+        await plc.set('myTagNickname', True)
         print(await plc.get())
 ```
 

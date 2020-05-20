@@ -53,7 +53,6 @@ async def test_tagged_driver(tagged_driver, expected_tags):
     assert expected_tags.keys() == state.keys()
 
 
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize('prefix', ['x', 'y'])
 async def test_bool_roundtrip(plc_driver, prefix):
