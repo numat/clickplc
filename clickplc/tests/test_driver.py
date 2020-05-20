@@ -49,7 +49,7 @@ def test_unsupported_tags():
 async def test_tagged_driver(tagged_driver, expected_tags):
     await tagged_driver.set('VAH_101_OK', True)
     state = await tagged_driver.get()
-    assert state.get('VAH_101_OK') is True
+    assert state.get('VAH_101_OK')
     assert expected_tags.keys() == state.keys()
 
 
