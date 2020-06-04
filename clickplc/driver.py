@@ -4,7 +4,9 @@ A Python driver for Koyo ClickPLC ethernet units.
 Distributed under the GNU General Public License v2
 Copyright (C) 2020 NuMat Technologies
 """
+import csv
 import pydoc
+from collections import defaultdict
 from string import digits
 from typing import Union, List
 
@@ -29,14 +31,44 @@ class ClickPLC(AsyncioModbusClient):
         'ds': 'int16',  # (D)ata register (s)igned int
     }
 
-    async def get(self, address: str) -> dict:
+    def __init__(self, address, tag_filepath='', timeout=1):
+        """Initialize PLC connection and data structure.
+
+        Args:
+            address: The PLC IP address or DNS name
+            tag_filepath: Path to the PLC tags file
+            timeout (optional): Timeout when communicating with PLC. Default 1s.
+
+        """
+        super().__init__(address, timeout)
+        self.tags = self._load_tags(tag_filepath)
+        self.active_addresses = self._get_address_ranges(self.tags)
+
+    def get_tags(self) -> dict:
+        """Return all tags and associated configuration information.
+
+        Use this data for debugging or to provide more detailed
+        information on user interfaces.
+
+        Returns:
+            A dictionary containing information associated with each tag name.
+
+        """
+        return self.tags
+
+    async def get(self, address: str = None) -> dict:
         """Get variables from the ClickPLC.
 
         Args:
             address: ClickPLC address(es) to get. Specify a range with a
                 hyphen, e.g. 'DF1-DF40'
-            data: A value or list of values to set.
 
+        If driver is loaded with a tags file this can be called without an
+        address to return all nicknamed addresses in the tags file
+        >>> plc.get()
+        {'P-101': 0.0, 'P-102': 0.0 ..., T-101:0.0}
+
+        Otherwise one or more internal variable can be requested
         >>> plc.get('df1')
         0.0
         >>> plc.get('df1-df20')
@@ -47,11 +79,21 @@ class ClickPLC(AsyncioModbusClient):
         This uses the ClickPLC's internal variable notation, which can be
         found in the Address Picker of the ClickPLC software.
         """
+        if address is None:
+            if not self.tags:
+                raise ValueError('An address must be supplied to get if tags were not '
+                                 'provided when driver initialized')
+            results = {}
+            for category, address in self.active_addresses.items():
+                results.update(await getattr(self, '_get_' + category)(address['min'], address['max']))
+            return {tag_name: results[tag_info['id'].lower()]
+                    for tag_name, tag_info in self.tags.items()}
+
         if '-' in address:
             start, end = address.split('-')
         else:
             start, end = address, None
-        i = start.index(next(s for s in start if s.isdigit()))
+        i = next(i for i, s in enumerate(start) if s.isdigit())
         category, start_index = start[:i].lower(), int(start[i:])
         end_index = None if end is None else int(end[i:])
 
@@ -73,15 +115,19 @@ class ClickPLC(AsyncioModbusClient):
 
         >>> plc.set('df1', 0.0)  # Sets DF1 to 0.0
         >>> plc.set('df1', [0.0, 0.0, 0.0])  # Sets DF1-DF3 to 0.0.
-        >>> plc.set('y101', True)  # Sets Y101 to true
+        >>> plc.set('myTagNickname', True)  # Sets address named myTagNickname to true
 
         This uses the ClickPLC's internal variable notation, which can be
-        found in the Address Picker of the ClickPLC software.
+        found in the Address Picker of the ClickPLC software. If a tags file
+        was loaded at driver initalization, nicknames can be used instead.
         """
+        if address in self.tags:
+            address = self.tags[address]['id']
+
         if not isinstance(data, list):
             data = [data]
 
-        i = address.index(next(s for s in address if s.isdigit()))
+        i = next(i for i, s in enumerate(address) if s.isdigit())
         category, index = address[:i].lower(), int(address[i:])
         if category not in self.data_types:
             raise ValueError(f"{category} currently unsupported.")
@@ -389,3 +435,54 @@ class ClickPLC(AsyncioModbusClient):
             await self.write_registers(address, payload, skip_encode=True)
         else:
             await self.write_register(address, _pack(data), skip_encode=True)
+
+    def _load_tags(self, tag_filepath: str) -> dict:
+        """Load tags from file path.
+
+        This tag file is optional but is needed to identify the appropriate variable names,
+        and modbus addresses for tags in use on the PLC.
+
+        """
+        if not tag_filepath:
+            return {}
+        with open(tag_filepath) as csv_file:
+            csv_data = csv_file.read().splitlines()
+        csv_data[0] = csv_data[0].lstrip('## ')
+        parsed = {
+            row['Nickname']: {
+                'address': {
+                    'start': int(row['Modbus Address']),
+                },
+                'id': row['Address'],
+                'comment': row['Address Comment'],
+                'type': self.data_types.get(
+                    row['Address'].rstrip(digits).lower()
+                ),
+            }
+            for row in csv.DictReader(csv_data)
+            if row['Nickname'] and not row['Nickname'].startswith("_")
+        }
+        for data in parsed.values():
+            if not data['comment']:
+                del data['comment']
+            if not data['type']:
+                raise TypeError(
+                    f"{data['id']} is an unsupported data type. Open a "
+                    "github issue at numat/clickplc to get it added."
+                )
+        sorted_tags = {k: parsed[k] for k in
+                       sorted(parsed, key=lambda k: parsed[k]['address']['start'])}
+        return sorted_tags
+
+    @staticmethod
+    def _get_address_ranges(tags: dict) -> dict:
+        """Parse the loaded tags to determine the range of addresses that must be
+        queried to return all values"""
+        address_dict = defaultdict(lambda: {'min': 1, 'max': 1})
+        for tag_info in tags.values():
+            i = next(i for i, s in enumerate(tag_info['id']) if s.isdigit())
+            category, index = tag_info['id'][:i].lower(), int(tag_info['id'][i:])
+            address_dict[category]['min'] = min(address_dict[category]['min'], index)
+            address_dict[category]['max'] = max(address_dict[category]['max'], index)
+        return address_dict
+

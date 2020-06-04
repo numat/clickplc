@@ -1,0 +1,3 @@
+Address,Data Type,Modbus Address,Function Code,Nickname,Initial Value,Retentive,Address Comment
+Y301,BIT,8289,"FC=01,05,15","P_101",0,No,""
+FOO1,BIT,16385,"FC=01,05,15","P_101_auto",0,No,""
