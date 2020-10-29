@@ -57,21 +57,6 @@ The entire API is `get` and `set`, and takes a range of inputs:
 >>> await plc.set('y101', True)  # Sets Y101 to true
 ```
 
-#### Using named tags
-
-The ClickPLC software provides the ability to export a file containing all the addresses in use
-along with their user assign nicknames. To export this file, open the Address Picker, select 
-"Display MODBUS address" and export the file. 
-![Export Tags](tags_export.png)
-If a path to this tags file is provided when the 
-driver is initialized, tag nicknames can be used to set values. Calling `.get()` without
-arguments will return all named tags.
-```python
-async with ClickPLC('the-plc-ip-address', 'path-to-tags-csv') as plc:
-        await plc.set('myTagNickname', True)
-        print(await plc.get())
-```
-
 Currently, only X, Y, C, DS, and DF are supported:
 
 |  |  |  |
@@ -82,5 +67,24 @@ Currently, only X, Y, C, DS, and DF are supported:
 | df | float | (D)ata register, (f)loating point |
 | ds | int16 | (D)ata register, (s)igned int |
 
-I personally haven't needed to use the other categories, but they are
+We personally haven't needed to use the other categories, but they are
 straightforward to add if needed.
+
+### Tags / Nicknames
+
+Recent ClickPLC software provides the ability to export a "tags file", which
+contains all variables with user-assigned nicknames. The tags file can be used
+with this driver to improve code readability. (Who really wants to think about
+modbus addresses and register/coil types?)
+
+To export a tags file, open the ClickPLC software, go to the Address Picker,
+select "Display MODBUS address", and export the file.
+
+Once you have this file, simply pass the file path to the driver. You can now
+`set` variables by name and `get` all named variables by default.
+
+```python
+async with ClickPLC('the-plc-ip-address', 'path-to-tags.csv') as plc:
+    await plc.set('my-nickname', True)  # Set variable by nickname
+    print(await plc.get())  # Get all named variables in tags file
+```
