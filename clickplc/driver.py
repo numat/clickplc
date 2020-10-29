@@ -29,6 +29,7 @@ class ClickPLC(AsyncioModbusClient):
         'c': 'bool',    # (C)ontrol relay
         'df': 'float',  # (D)ata register (f)loating point
         'ds': 'int16',  # (D)ata register (s)igned int
+        'sd': 'int16',  # (S)ystem (D)ata
     }
 
     def __init__(self, address, tag_filepath='', timeout=1):
@@ -310,6 +311,28 @@ class ClickPLC(AsyncioModbusClient):
         if end is None:
             return decoder.decode_16bit_int()
         return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
+
+    async def _get_sd(self, start: int, end: int) -> Union[dict, int]:
+        """Read SD registers. Called by `get`.
+
+        SD entries start at Modbus address 361440 (361441 in the Click software's
+        1-indexed notation). Each SD entry takes 16 bits.
+        """
+        print(start)
+        if start < 1 or start > 4500:
+            raise ValueError('SD must be in [1, 4500]')
+        if end is not None and (end < 1 or end > 4500):
+            raise ValueError('SD end must be in [1, 4500]')
+
+        address = 61440 + start - 1
+        count = 1 if end is None else (end - start + 1)
+        registers = await self.read_registers(address, count)
+        decoder = BinaryPayloadDecoder.fromRegisters(registers,
+                                                     byteorder=Endian.Big,
+                                                     wordorder=Endian.Little)
+        if end is None:
+            return decoder.decode_16bit_int()
+        return {f'sd{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
 
     async def _set_x(self, start: int, data: Union[List[bool], bool]):
         """Set X addresses. Called by `set`.
