@@ -318,7 +318,6 @@ class ClickPLC(AsyncioModbusClient):
         SD entries start at Modbus address 361440 (361441 in the Click software's
         1-indexed notation). Each SD entry takes 16 bits.
         """
-        print(start)
         if start < 1 or start > 4500:
             raise ValueError('SD must be in [1, 4500]')
         if end is not None and (end < 1 or end > 4500):
