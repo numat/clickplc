@@ -32,7 +32,8 @@ def expected_tags():
         'TI_101': {'address': {'start': 428673}, 'id': 'DF1', 'type': 'float'},
         'VAHH_101_OK': {'address': {'start': 16395}, 'id': 'C11', 'type': 'bool'},
         'VAH_101_OK': {'address': {'start': 16394}, 'id': 'C10', 'type': 'bool'},
-        'VI_101': {'address': {'start': 428685}, 'id': 'DF7', 'type': 'float'}
+        'VI_101': {'address': {'start': 428685}, 'id': 'DF7', 'type': 'float'},
+        'PLC_Error_Code': {'address': {'start': 361441}, 'id': 'SD1', 'type': 'int16'},
     }
 
 
