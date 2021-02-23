@@ -86,7 +86,8 @@ class ClickPLC(AsyncioModbusClient):
                                  'provided when driver initialized')
             results = {}
             for category, address in self.active_addresses.items():
-                results.update(await getattr(self, '_get_' + category)(address['min'], address['max']))
+                results.update(await getattr(self, '_get_' + category)
+                                            (address['min'], address['max']))
             return {tag_name: results[tag_info['id'].lower()]
                     for tag_name, tag_info in self.tags.items()}
 
@@ -498,8 +499,11 @@ class ClickPLC(AsyncioModbusClient):
 
     @staticmethod
     def _get_address_ranges(tags: dict) -> dict:
-        """Parse the loaded tags to determine the range of addresses that must be
-        queried to return all values"""
+        """Determine range of addresses required.
+
+        Parse the loaded tags to determine the range of addresses that must be
+        queried to return all values
+        """
         address_dict = defaultdict(lambda: {'min': 1, 'max': 1})
         for tag_info in tags.values():
             i = next(i for i, s in enumerate(tag_info['id']) if s.isdigit())
@@ -507,4 +511,3 @@ class ClickPLC(AsyncioModbusClient):
             address_dict[category]['min'] = min(address_dict[category]['min'], index)
             address_dict[category]['max'] = max(address_dict[category]['max'], index)
         return address_dict
-
