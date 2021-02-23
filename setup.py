@@ -32,6 +32,8 @@ setup(
             'pytest',
             'pytest-cov',
             'pytest-asyncio',
+            'flake8==3.*',
+            'flake8-docstrings==1.*',
         ],
     },
     license='GPLv2',
