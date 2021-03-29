@@ -1,16 +1,19 @@
-"""Python driver for Koyo Ethernet ClickPLCs."""
-from platform import python_version
+"""Python driver for AutomationDirect (formerly Koyo) Ethernet ClickPLCs."""
+from sys import version_info
 from setuptools import setup
 
-if python_version() < '3.6':
-    raise ImportError("This module requires Python >=3.6")
+if version_info < (3, 6):
+    raise ImportError("This module requires Python >=3.6 for asyncio support")
+if version_info >= (3, 10):
+    raise ImportError("This module depends on pymodbus, which is incompatible with Python 3.10")
+
 
 with open('README.md', 'r') as in_file:
     long_description = in_file.read()
 
 setup(
     name='clickplc',
-    version='0.3.2',
+    version='0.3.3',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -29,6 +32,8 @@ setup(
             'pytest',
             'pytest-cov',
             'pytest-asyncio',
+            'flake8==3.*',
+            'flake8-docstrings==1.*',
         ],
     },
     license='GPLv2',
@@ -41,6 +46,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Scientific/Engineering :: Human Machine Interfaces'
     ]
 )

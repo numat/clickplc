@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 A Python driver for Koyo ClickPLC ethernet units.
 

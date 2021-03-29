@@ -1,3 +1,11 @@
+"""
+Python mock driver for AutomationDirect (formerly Koyo) ClickPLCs.
+
+Uses local storage instead of remote communications.
+
+Distributed under the GNU General Public License v2
+Copyright (C) 2021 NuMat Technologies
+"""
 from collections import defaultdict
 from unittest.mock import MagicMock
 
@@ -10,14 +18,16 @@ from clickplc.driver import ClickPLC as realClickPLC
 
 
 class AsyncMock(MagicMock):
-    """Magic mock that works with async methods"""
+    """Magic mock that works with async methods."""
+
     async def __call__(self, *args, **kwargs):
+        """Convert regular mocks into into an async coroutine."""
         return super(AsyncMock, self).__call__(*args, **kwargs)
 
 
 class ClickPLC(realClickPLC):
-    """A version of the driver with the remote communication replaced with local data storage
-    for testing"""
+    """A version of the driver replacing remote communication with local storage for testing."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client = AsyncMock()
