@@ -13,7 +13,7 @@ with open('README.md', 'r') as in_file:
 
 setup(
     name='clickplc',
-    version='0.3.3b1',
+    version='0.3.3',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -25,7 +25,7 @@ setup(
         'console_scripts': [('clickplc = clickplc:command_line')]
     },
     install_requires=[
-        'pymodbus==2.5.0'
+        'pymodbus>=2.4.0'
     ],
     extras_require={
         'test': [
