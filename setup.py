@@ -25,7 +25,7 @@ setup(
         'console_scripts': [('clickplc = clickplc:command_line')]
     },
     install_requires=[
-        'pymodbus==2.2.0rc1'
+        'pymodbus>=2.4.0'
     ],
     extras_require={
         'test': [
