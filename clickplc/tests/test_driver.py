@@ -1,7 +1,9 @@
 """Test the driver correctly parses a tags file and responds with correct data."""
+from unittest import mock
 
 import pytest
 
+from clickplc import command_line
 from clickplc.mock import ClickPLC
 
 
@@ -39,6 +41,28 @@ def expected_tags():
         'VI_101': {'address': {'start': 428685}, 'id': 'DF7', 'type': 'float'},
         'PLC_Error_Code': {'address': {'start': 361441}, 'id': 'SD1', 'type': 'int16'},
     }
+
+
+@mock.patch('clickplc.ClickPLC', ClickPLC)
+def test_driver_cli(capsys):
+    """Confirm the commandline interface works without a tags file."""
+    command_line(['fakeip'])
+    captured = capsys.readouterr()
+    assert 'x816' in captured.out
+    assert 'c100' in captured.out
+    assert 'df100' in captured.out
+
+
+@mock.patch('clickplc.ClickPLC', ClickPLC)
+def test_driver_cli_tags(capsys):
+    """Confirm the commandline interface works with a tags file."""
+    command_line(['fakeip', 'tests/plc_tags.csv'])
+    captured = capsys.readouterr()
+    assert 'P_101' in captured.out
+    assert 'VAHH_101_OK' in captured.out
+    assert 'TI_101' in captured.out
+    with pytest.raises(SystemExit):
+        command_line(['fakeip', 'tags', 'bogus'])
 
 
 def test_get_tags(tagged_driver, expected_tags):
