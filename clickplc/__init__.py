@@ -7,7 +7,7 @@ Copyright (C) 2019 NuMat Technologies
 from clickplc.driver import ClickPLC
 
 
-def command_line():
+def command_line(args=None):
     """Command-line tool for ClickPLC communication."""
     import argparse
     import asyncio
@@ -16,9 +16,9 @@ def command_line():
     parser = argparse.ArgumentParser(description="Control a ClickPLC from "
                                      "the command line")
     parser.add_argument('address', help="The IP address of the ClickPLC")
-    parser.add_argument('tags_file', default=None, required=False,
+    parser.add_argument('tags_file', nargs="?",
                         help="Optional: Path to a tags file for this PLC")
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     async def get():
         async with ClickPLC(args.address, args.tags_file) as plc:
@@ -34,7 +34,6 @@ def command_line():
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(get())
-    loop.close()
 
 
 if __name__ == '__main__':

@@ -88,3 +88,8 @@ async with ClickPLC('the-plc-ip-address', 'path-to-tags.csv') as plc:
     await plc.set('my-nickname', True)  # Set variable by nickname
     print(await plc.get())  # Get all named variables in tags file
 ```
+
+Additionally, the tags file can be used with the commandline tool to provide more informative output:
+```
+$ clickplc the-plc-ip-address tags-filepath
+```
