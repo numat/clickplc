@@ -268,7 +268,7 @@ class ClickPLC(AsyncioModbusClient):
         coils = await self.read_coils(start_coil, count)
         if count == 1:
             return coils.bits[0]
-        return {f'c{(start + i)}': bit for i, bit in enumerate(coils.bits)}
+        return {f'c{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
 
     async def _get_df(self, start: int, end: int) -> Union[dict, float]:
         """Read DF registers. Called by `get`.

@@ -13,7 +13,7 @@ with open('README.md', 'r') as in_file:
 
 setup(
     name='clickplc',
-    version='0.3.4',
+    version='0.3.5',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
