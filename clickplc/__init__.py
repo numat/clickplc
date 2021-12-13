@@ -30,6 +30,7 @@ def command_line(args=None):
                 d.update(await plc.get('c1-c100'))
                 d.update(await plc.get('df1-df100'))
                 d.update(await plc.get('ds1-ds100'))
+                d.update(await plc.get('ctd1-ctd250'))
             print(json.dumps(d, indent=4))
 
     loop = asyncio.get_event_loop()
