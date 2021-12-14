@@ -24,13 +24,13 @@ class ClickPLC(AsyncioModbusClient):
     """
 
     data_types = {
-        'x': 'bool',    # Input point
-        'y': 'bool',    # Output point
-        'c': 'bool',    # (C)ontrol relay
-        'df': 'float',  # (D)ata register (f)loating point
-        'ds': 'int16',  # (D)ata register (s)igned int
-        'sd': 'int16',  # (S)ystem (D)ata
-        'ctd':'int32',  # Counter Current Values 
+        'x': 'bool',     # Input point
+        'y': 'bool',     # Output point
+        'c': 'bool',     # (C)ontrol relay
+        'df': 'float',   # (D)ata register (f)loating point
+        'ds': 'int16',   # (D)ata register (s)igned int
+        'sd': 'int16',   # (S)ystem (D)ata
+        'ctd': 'int32',  # (C)oun(t)er Current Values, (d)ouble
     }
 
     def __init__(self, address, tag_filepath='', timeout=1):
@@ -335,12 +335,12 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_16bit_int()
         return {f'sd{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
 
-	
     async def _get_ctd(self, start: int, end: int) -> int:
         """Read CTD registers. Called by `get`.
 
         CTD entries start at Modbus address 449152 (449153 in the Click software's
-        1-indexed notation). Each CTD entry takes 32 bits."""
+        1-indexed notation). Each CTD entry takes 32 bits, which is 2 16bit registers.
+        """
         if start < 1 or start > 250:
             raise ValueError('CTD must be in [1, 250]')
         if end is not None and (end < 1 or end > 250):
@@ -348,15 +348,13 @@ class ClickPLC(AsyncioModbusClient):
 
         address = 49152 + start - 1
         count = 1 if end is None else (end - start + 1)
-        registers = await self.read_registers(address, count)
+        registers = await self.read_registers(address, count * 2)
         decoder = BinaryPayloadDecoder.fromRegisters(registers,
                                                      byteorder=Endian.Big,
                                                      wordorder=Endian.Little)
         if end is None:
-            return decoder.decode_16bit_int()
-        return {f'ctd{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
-    
-
+            return decoder.decode_32bit_int()
+        return {f'ctd{n}': decoder.decode_32bit_int() for n in range(start, end + 1)}
 
     async def _set_x(self, start: int, data: Union[List[bool], bool]):
         """Set X addresses. Called by `set`.
