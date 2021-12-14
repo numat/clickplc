@@ -40,6 +40,7 @@ def expected_tags():
         'VAH_101_OK': {'address': {'start': 16394}, 'id': 'C10', 'type': 'bool'},
         'VI_101': {'address': {'start': 428685}, 'id': 'DF7', 'type': 'float'},
         'PLC_Error_Code': {'address': {'start': 361441}, 'id': 'SD1', 'type': 'int16'},
+        'timer': {'address': {'start': 449153}, 'id': 'CTD1', 'type': 'int32'},
     }
 
 
@@ -200,6 +201,15 @@ async def test_ds_error_handling(plc_driver):
         await plc_driver.set('ds4501', 1)
     with pytest.raises(ValueError, match=r'Data list longer than available addresses.'):
         await plc_driver.set('ds4500', [1, 2])
+
+
+@pytest.mark.asyncio
+async def test_ctd_error_handling(plc_driver):
+    """Ensure errors are handled for invalid requests of ctd registers."""
+    with pytest.raises(ValueError, match=r'CTD must be in \[1, 250\]'):
+        await plc_driver.get('ctd251')
+    with pytest.raises(ValueError, match=r'CTD end must be in \[1, 250\]'):
+        await plc_driver.get('ctd1-ctd251')
 
 
 @pytest.mark.asyncio
