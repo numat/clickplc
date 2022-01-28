@@ -31,15 +31,11 @@ steps:
 
 - script: |
     flake8
-  env:
-    USER_TOKEN: $(USER_TOKEN)
   displayName: 'Lint Code'
 
 - script: |
     cd clickplc
     pytest --junitxml=../reports/test-coverage.xml  --cov=. --cov-report=xml
-  env:
-    USER_TOKEN: $(USER_TOKEN)
   displayName: 'Run tests'
 
 - task: PublishTestResults@2
