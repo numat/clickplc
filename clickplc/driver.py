@@ -56,7 +56,7 @@ class ClickPLC(AsyncioModbusClient):
             A dictionary containing information associated with each tag name.
 
         """
-        return self.tags
+        return self.tags.copy()
 
     async def get(self, address: str = None) -> dict:
         """Get variables from the ClickPLC.
