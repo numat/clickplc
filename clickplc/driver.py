@@ -6,6 +6,7 @@ Copyright (C) 2020 NuMat Technologies
 """
 import csv
 import pydoc
+import copy
 from collections import defaultdict
 from string import digits
 from typing import Union, List
@@ -56,7 +57,7 @@ class ClickPLC(AsyncioModbusClient):
             A dictionary containing information associated with each tag name.
 
         """
-        return self.tags
+        return copy.deepcopy(self.tags)
 
     async def get(self, address: str = None) -> dict:
         """Get variables from the ClickPLC.
