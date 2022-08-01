@@ -32,7 +32,7 @@ setup(
             'pytest',
             'pytest-cov',
             'pytest-asyncio',
-            'flake8>=3,<5',
+            'flake8>=3,<6',
             'flake8-docstrings==1.*',
         ],
     },
