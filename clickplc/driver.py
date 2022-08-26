@@ -123,7 +123,7 @@ class ClickPLC(AsyncioModbusClient):
 
         This uses the ClickPLC's internal variable notation, which can be
         found in the Address Picker of the ClickPLC software. If a tags file
-        was loaded at driver initalization, nicknames can be used instead.
+        was loaded at driver initialization, nicknames can be used instead.
         """
         if address in self.tags:
             address = self.tags[address]['id']
