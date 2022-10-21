@@ -9,8 +9,10 @@ Copyright (C) 2021 NuMat Technologies
 from collections import defaultdict
 from unittest.mock import MagicMock
 
-from pymodbus.bit_read_message import ReadCoilsResponse, ReadDiscreteInputsResponse
-from pymodbus.bit_write_message import WriteSingleCoilResponse, WriteMultipleCoilsResponse
+from pymodbus.bit_read_message import (ReadCoilsResponse,
+                                       ReadDiscreteInputsResponse)
+from pymodbus.bit_write_message import (WriteMultipleCoilsResponse,
+                                        WriteSingleCoilResponse)
 from pymodbus.register_read_message import ReadHoldingRegistersResponse
 from pymodbus.register_write_message import WriteMultipleRegistersResponse
 
