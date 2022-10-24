@@ -18,6 +18,8 @@ strategy:
       PYTHON_VERSION: '3.9'
     Python310:
       PYTHON_VERSION: '3.10'
+    Python311:
+      PYTHON_VERSION: '3.11'
   maxParallel: 3
 
 steps:
