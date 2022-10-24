@@ -19,20 +19,21 @@ from pymodbus.register_write_message import WriteMultipleRegistersResponse
 from clickplc.driver import ClickPLC as realClickPLC
 
 
-class AsyncMock(MagicMock):
+class AsyncClientMock(MagicMock):
     """Magic mock that works with async methods."""
 
     async def __call__(self, *args, **kwargs):
         """Convert regular mocks into into an async coroutine."""
-        return super(AsyncMock, self).__call__(*args, **kwargs)
+        return super().__call__(*args, **kwargs)
 
 
 class ClickPLC(realClickPLC):
     """A version of the driver replacing remote communication with local storage for testing."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.client = AsyncMock()
+    def __init__(self, address, tag_filepath='', timeout=1):
+        self.tags = self._load_tags(tag_filepath)
+        self.active_addresses = self._get_address_ranges(self.tags)
+        self.client = AsyncClientMock()
         self._coils = defaultdict(bool)
         self._discrete_inputs = defaultdict(bool)
         self._registers = defaultdict(bytes)
