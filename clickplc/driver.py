@@ -4,15 +4,15 @@ A Python driver for Koyo ClickPLC ethernet units.
 Distributed under the GNU General Public License v2
 Copyright (C) 2020 NuMat Technologies
 """
+import copy
 import csv
 import pydoc
-import copy
 from collections import defaultdict
 from string import digits
-from typing import Union, List
+from typing import List, Union
 
 from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
+from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
 
 from clickplc.util import AsyncioModbusClient
 

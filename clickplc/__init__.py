@@ -33,7 +33,7 @@ def command_line(args=None):
                 d.update(await plc.get('ctd1-ctd250'))
             print(json.dumps(d, indent=4))
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(get())
 
 
