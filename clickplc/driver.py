@@ -9,7 +9,7 @@ import csv
 import pydoc
 from collections import defaultdict
 from string import digits
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
@@ -59,7 +59,7 @@ class ClickPLC(AsyncioModbusClient):
         """
         return copy.deepcopy(self.tags)
 
-    async def get(self, address: str = None) -> dict:
+    async def get(self, address: Optional[str] = None) -> dict:
         """Get variables from the ClickPLC.
 
         Args:
@@ -336,7 +336,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_16bit_int()
         return {f'sd{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
 
-    async def _get_ctd(self, start: int, end: int) -> int:
+    async def _get_ctd(self, start: int, end: int) -> dict:
         """Read CTD registers. Called by `get`.
 
         CTD entries start at Modbus address 449152 (449153 in the Click software's
