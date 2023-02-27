@@ -87,9 +87,9 @@ class ClickPLC(AsyncioModbusClient):
                 raise ValueError('An address must be supplied to get if tags were not '
                                  'provided when driver initialized')
             results = {}
-            for category, address in self.active_addresses.items():
+            for category, _address in self.active_addresses.items():
                 results.update(await getattr(self, '_get_' + category)
-                                            (address['min'], address['max']))
+                                            (_address['min'], _address['max']))
             return {tag_name: results[tag_info['id'].lower()]
                     for tag_name, tag_info in self.tags.items()}
 
