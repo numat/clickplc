@@ -51,11 +51,11 @@ class AsyncioModbusClient(object):
             except Exception:
                 raise IOError(f"Could not connect to '{self.ip}'.")
 
-    async def read_coils(self, address, count):
+    async def read_coils(self, address: int, count):
         """Read modbus output coils (0 address prefix)."""
         return await self._request('read_coils', address, count)
 
-    async def read_registers(self, address, count):
+    async def read_registers(self, address: int, count):
         """Read modbus registers.
 
         The Modbus protocol doesn't allow responses longer than 250 bytes
@@ -71,19 +71,19 @@ class AsyncioModbusClient(object):
         registers += r.registers
         return registers
 
-    async def write_coil(self, address, value):
+    async def write_coil(self, address: int, value):
         """Write modbus coils."""
         await self._request('write_coil', address, value)
 
-    async def write_coils(self, address, values):
+    async def write_coils(self, address: int, values):
         """Write modbus coils."""
         await self._request('write_coils', address, values)
 
-    async def write_register(self, address, value, skip_encode=False):
+    async def write_register(self, address: int, value, skip_encode=False):
         """Write a modbus register."""
         await self._request('write_register', address, value, skip_encode=skip_encode)
 
-    async def write_registers(self, address, values, skip_encode=False):
+    async def write_registers(self, address: int, values, skip_encode=False):
         """Write modbus registers.
 
         The Modbus protocol doesn't allow requests longer than 250 bytes
