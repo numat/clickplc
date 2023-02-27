@@ -448,16 +448,17 @@ class ClickPLC(AsyncioModbusClient):
         def _pack(values: List[float]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
-            builder.add_32bit_float(float(value))
+            for value in values:
+                builder.add_32bit_float(float(value))
             return builder.build()
 
         if isinstance(data, list):
             if len(data) > 500 - start:
                 raise ValueError('Data list longer than available addresses.')
-            payload = sum((_pack(d) for d in data), [])
+            payload = _pack(data)
             await self.write_registers(address, payload, skip_encode=True)
         else:
-            await self.write_register(address, _pack(data), skip_encode=True)
+            await self.write_register(address, _pack([data]), skip_encode=True)
 
     async def _set_ds(self, start: int, data: Union[List[int], int]):
         """Set DS registers. Called by `set`.
@@ -468,19 +469,20 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DS must be in [1, 4500]')
         address = (start - 1)
 
-        def _pack(value):
+        def _pack(values: List[int]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
-            builder.add_16bit_int(int(value))
+            for value in values:
+                builder.add_16bit_int(int(value))
             return builder.build()
 
         if isinstance(data, list):
             if len(data) > 4500 - start:
                 raise ValueError('Data list longer than available addresses.')
-            payload = sum((_pack(d) for d in data), [])
+            payload = _pack(data)
             await self.write_registers(address, payload, skip_encode=True)
         else:
-            await self.write_register(address, _pack(data), skip_encode=True)
+            await self.write_register(address, _pack([data]), skip_encode=True)
 
     def _load_tags(self, tag_filepath: str) -> dict:
         """Load tags from file path.
