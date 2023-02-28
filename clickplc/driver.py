@@ -9,7 +9,7 @@ import csv
 import pydoc
 from collections import defaultdict
 from string import digits
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
@@ -87,9 +87,9 @@ class ClickPLC(AsyncioModbusClient):
                 raise ValueError('An address must be supplied to get if tags were not '
                                  'provided when driver initialized')
             results = {}
-            for category, address in self.active_addresses.items():
+            for category, _address in self.active_addresses.items():
                 results.update(await getattr(self, '_get_' + category)
-                                            (address['min'], address['max']))
+                                            (_address['min'], _address['max']))
             return {tag_name: results[tag_info['id'].lower()]
                     for tag_name, tag_info in self.tags.items()}
 
@@ -109,7 +109,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError("Inter-category ranges are unsupported.")
         return await getattr(self, '_get_' + category)(start_index, end_index)
 
-    async def set(self, address, data):
+    async def set(self, address: str, data):
         """Set values on the ClickPLC.
 
         Args:
@@ -445,19 +445,20 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DF must be in [1, 500]')
         address = 28672 + 2 * (start - 1)
 
-        def _pack(value):
+        def _pack(values: List[float]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
-            builder.add_32bit_float(float(value))
+            for value in values:
+                builder.add_32bit_float(float(value))
             return builder.build()
 
         if isinstance(data, list):
             if len(data) > 500 - start:
                 raise ValueError('Data list longer than available addresses.')
-            payload = sum((_pack(d) for d in data), [])
+            payload = _pack(data)
             await self.write_registers(address, payload, skip_encode=True)
         else:
-            await self.write_register(address, _pack(data), skip_encode=True)
+            await self.write_register(address, _pack([data]), skip_encode=True)
 
     async def _set_ds(self, start: int, data: Union[List[int], int]):
         """Set DS registers. Called by `set`.
@@ -468,19 +469,20 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DS must be in [1, 4500]')
         address = (start - 1)
 
-        def _pack(value):
+        def _pack(values: List[int]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
-            builder.add_16bit_int(int(value))
+            for value in values:
+                builder.add_16bit_int(int(value))
             return builder.build()
 
         if isinstance(data, list):
             if len(data) > 4500 - start:
                 raise ValueError('Data list longer than available addresses.')
-            payload = sum((_pack(d) for d in data), [])
+            payload = _pack(data)
             await self.write_registers(address, payload, skip_encode=True)
         else:
-            await self.write_register(address, _pack(data), skip_encode=True)
+            await self.write_register(address, _pack([data]), skip_encode=True)
 
     def _load_tags(self, tag_filepath: str) -> dict:
         """Load tags from file path.
@@ -494,7 +496,7 @@ class ClickPLC(AsyncioModbusClient):
         with open(tag_filepath) as csv_file:
             csv_data = csv_file.read().splitlines()
         csv_data[0] = csv_data[0].lstrip('## ')
-        parsed = {
+        parsed: Dict[str, Dict[str, Any]] = {
             row['Nickname']: {
                 'address': {
                     'start': int(row['Modbus Address']),
@@ -521,13 +523,13 @@ class ClickPLC(AsyncioModbusClient):
         return sorted_tags
 
     @staticmethod
-    def _get_address_ranges(tags: dict) -> dict:
+    def _get_address_ranges(tags: dict) -> Dict[str, Dict]:
         """Determine range of addresses required.
 
         Parse the loaded tags to determine the range of addresses that must be
         queried to return all values
         """
-        address_dict = defaultdict(lambda: {'min': 1, 'max': 1})
+        address_dict: dict = defaultdict(lambda: {'min': 1, 'max': 1})
         for tag_info in tags.values():
             i = next(i for i, s in enumerate(tag_info['id']) if s.isdigit())
             category, index = tag_info['id'][:i].lower(), int(tag_info['id'][i:])
