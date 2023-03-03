@@ -38,6 +38,10 @@ steps:
   displayName: 'Lint Code'
 
 - script: |
+    mypy clickplc
+  displayName: 'Check types with mypy'
+
+- script: |
     cd clickplc
     pytest --junitxml=../reports/test-coverage.xml  --cov=. --cov-report=xml
   displayName: 'Run tests'
