@@ -4,12 +4,14 @@ A Python driver for Koyo ClickPLC ethernet units.
 Distributed under the GNU General Public License v2
 Copyright (C) 2020 NuMat Technologies
 """
+from __future__ import annotations
+
 import copy
 import csv
 import pydoc
 from collections import defaultdict
 from string import digits
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
@@ -59,7 +61,7 @@ class ClickPLC(AsyncioModbusClient):
         """
         return copy.deepcopy(self.tags)
 
-    async def get(self, address: Optional[str] = None) -> dict:
+    async def get(self, address: str | None = None) -> dict:
         """Get variables from the ClickPLC.
 
         Args:
@@ -104,7 +106,7 @@ class ClickPLC(AsyncioModbusClient):
         if end_index is not None and end_index < start_index:
             raise ValueError("End address must be greater than start address.")
         if category not in self.data_types:
-            raise ValueError("{} currently unsupported.".format(category))
+            raise ValueError(f"{category} currently unsupported.")
         if end is not None and end[:i].lower() != category:
             raise ValueError("Inter-category ranges are unsupported.")
         return await getattr(self, '_get_' + category)(start_index, end_index)
@@ -245,7 +247,7 @@ class ClickPLC(AsyncioModbusClient):
             current += 1
         return output
 
-    async def _get_c(self, start: int, end: int) -> Union[dict, bool]:
+    async def _get_c(self, start: int, end: int) -> dict | bool:
         """Read C addresses. Called by `get`.
 
         C entries start at 16384 (16385 in the Click software's 1-indexed
@@ -272,7 +274,7 @@ class ClickPLC(AsyncioModbusClient):
             return coils.bits[0]
         return {f'c{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
 
-    async def _get_df(self, start: int, end: int) -> Union[dict, float]:
+    async def _get_df(self, start: int, end: int) -> dict | float:
         """Read DF registers. Called by `get`.
 
         DF entries start at Modbus address 28672 (28673 in the Click software's
@@ -294,7 +296,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_float()
         return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
-    async def _get_ds(self, start: int, end: int) -> Union[dict, int]:
+    async def _get_ds(self, start: int, end: int) -> dict | int:
         """Read DS registers. Called by `get`.
 
         DS entries start at Modbus address 0 (1 in the Click software's
@@ -315,7 +317,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_16bit_int()
         return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
 
-    async def _get_sd(self, start: int, end: int) -> Union[dict, int]:
+    async def _get_sd(self, start: int, end: int) -> dict | int:
         """Read SD registers. Called by `get`.
 
         SD entries start at Modbus address 361440 (361441 in the Click software's
@@ -357,7 +359,7 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_int()
         return {f'ctd{n}': decoder.decode_32bit_int() for n in range(start, end + 1)}
 
-    async def _set_x(self, start: int, data: Union[List[bool], bool]):
+    async def _set_x(self, start: int, data: list[bool] | bool):
         """Set X addresses. Called by `set`.
 
         For more information on the quirks of X coils, read the `_get_x`
@@ -385,7 +387,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_y(self, start: int, data: Union[List[bool], bool]):
+    async def _set_y(self, start: int, data: list[bool] | bool):
         """Set Y addresses. Called by `set`.
 
         For more information on the quirks of Y coils, read the `_get_y`
@@ -413,7 +415,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_c(self, start: int, data: Union[List[bool], bool]):
+    async def _set_c(self, start: int, data: list[bool] | bool):
         """Set C addresses. Called by `set`.
 
         For more information on the quirks of C coils, read the `_get_c`
@@ -430,7 +432,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_coil(coil, data)
 
-    async def _set_df(self, start: int, data: Union[List[float], float]):
+    async def _set_df(self, start: int, data: list[float] | float):
         """Set DF registers. Called by `set`.
 
         The ClickPLC is little endian, but on registers ("words") instead
@@ -445,7 +447,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DF must be in [1, 500]')
         address = 28672 + 2 * (start - 1)
 
-        def _pack(values: List[float]):
+        def _pack(values: list[float]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
             for value in values:
@@ -460,7 +462,7 @@ class ClickPLC(AsyncioModbusClient):
         else:
             await self.write_register(address, _pack([data]), skip_encode=True)
 
-    async def _set_ds(self, start: int, data: Union[List[int], int]):
+    async def _set_ds(self, start: int, data: list[int] | int):
         """Set DS registers. Called by `set`.
 
         See _get_ds for more information.
@@ -469,7 +471,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError('DS must be in [1, 4500]')
         address = (start - 1)
 
-        def _pack(values: List[int]):
+        def _pack(values: list[int]):
             builder = BinaryPayloadBuilder(byteorder=Endian.Big,
                                            wordorder=Endian.Little)
             for value in values:
@@ -496,7 +498,7 @@ class ClickPLC(AsyncioModbusClient):
         with open(tag_filepath) as csv_file:
             csv_data = csv_file.read().splitlines()
         csv_data[0] = csv_data[0].lstrip('## ')
-        parsed: Dict[str, Dict[str, Any]] = {
+        parsed: dict[str, dict[str, Any]] = {
             row['Nickname']: {
                 'address': {
                     'start': int(row['Modbus Address']),
@@ -523,7 +525,7 @@ class ClickPLC(AsyncioModbusClient):
         return sorted_tags
 
     @staticmethod
-    def _get_address_ranges(tags: dict) -> Dict[str, Dict]:
+    def _get_address_ranges(tags: dict) -> dict[str, dict]:
         """Determine range of addresses required.
 
         Parse the loaded tags to determine the range of addresses that must be

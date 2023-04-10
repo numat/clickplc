@@ -3,17 +3,20 @@
 Distributed under the GNU General Public License v2
 Copyright (C) 2022 NuMat Technologies
 """
+from __future__ import annotations
+
 import asyncio
 
 try:
     from pymodbus.client import AsyncModbusTcpClient  # 3.x
 except ImportError:  # 2.4.x - 2.5.x
     from pymodbus.client.asynchronous.async_io import (  # type: ignore
-        ReconnectingAsyncioModbusTcpClient)
+        ReconnectingAsyncioModbusTcpClient,
+    )
 import pymodbus.exceptions
 
 
-class AsyncioModbusClient(object):
+class AsyncioModbusClient:
     """A generic asyncio client.
 
     This expands upon the pymodbus AsyncModbusTcpClient by
@@ -51,7 +54,7 @@ class AsyncioModbusClient(object):
                     await self.client.start(self.ip)  # type: ignore
                 self.open = True
             except Exception:
-                raise IOError(f"Could not connect to '{self.ip}'.")
+                raise OSError(f"Could not connect to '{self.ip}'.")
 
     async def read_coils(self, address: int, count):
         """Read modbus output coils (0 address prefix)."""
