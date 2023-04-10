@@ -1,0 +1,15 @@
+line-length = 99
+ignore = [
+    "PLR2004",
+    "D104",
+    "D107",
+    "C901",
+]
+exclude = ["venv*"]
+select = ["C", "D", "E", "F", "I", "UP", "YTT", "W"]
+# "SIM" flake-simplify
+# "ARG" flake8-unused args
+# "B" bandit
+# "RUF" ruff base config
+[pydocstyle]
+convention = "pep257"
