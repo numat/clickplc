@@ -35,7 +35,7 @@ setup(
             'pytest-asyncio',
             'flake8>=3,<7',
             'flake8-docstrings==1.*',
-            'mypy==1.1.1',
+            'mypy==1.2.0',
         ],
     },
     license='GPLv2',
