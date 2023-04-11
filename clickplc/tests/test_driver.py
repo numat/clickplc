@@ -16,7 +16,7 @@ def plc_driver():
 @pytest.fixture
 def tagged_driver():
     """Confirm the driver correctly initializes with a good tags file."""
-    return ClickPLC('fake ip', 'tests/plc_tags.csv')
+    return ClickPLC('fake ip', 'clickplc/tests/plc_tags.csv')
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def test_driver_cli(capsys):
 @mock.patch('clickplc.ClickPLC', ClickPLC)
 def test_driver_cli_tags(capsys):
     """Confirm the commandline interface works with a tags file."""
-    command_line(['fakeip', 'tests/plc_tags.csv'])
+    command_line(['fakeip', 'clickplc/tests/plc_tags.csv'])
     captured = capsys.readouterr()
     assert 'P_101' in captured.out
     assert 'VAHH_101_OK' in captured.out
@@ -74,7 +74,7 @@ def test_get_tags(tagged_driver, expected_tags):
 def test_unsupported_tags():
     """Confirm the driver detects an improper tags file."""
     with pytest.raises(TypeError, match='unsupported data type'):
-        ClickPLC('fake ip', 'tests/bad_tags.csv')
+        ClickPLC('fake ip', 'clickplc/tests/bad_tags.csv')
 
 
 @pytest.mark.asyncio

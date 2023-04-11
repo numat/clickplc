@@ -30,7 +30,7 @@ steps:
 
 - script: |
     python -m pip install --upgrade pip
-    pip install '.[test]'
+    pip install '.[test]' pytest-azurepipelines
   displayName: 'Install dependencies'
 
 - script: |
@@ -42,18 +42,5 @@ steps:
   displayName: 'Check types with mypy'
 
 - script: |
-    cd clickplc
-    pytest --junitxml=../reports/test-coverage.xml  --cov=. --cov-report=xml
+    pytest --junitxml=reports/test-coverage.xml  --cov=. --cov-report=xml
   displayName: 'Run tests'
-
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: 'reports/test-coverage.xml'
-    testRunTitle: '$(Agent.OS) - $(Build.BuildNumber)[$(Agent.JobName)] - Python $(python.version)'
-  condition: succeededOrFailed()
-
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
