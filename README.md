@@ -1,4 +1,4 @@
-clickplc [![Build Status](https://dev.azure.com/numat/NuMat/_apis/build/status/numat.clickplc?branchName=master)](https://dev.azure.com/numat/NuMat/_build/latest?definitionId=3&branchName=master)
+clickplc
 ========
 
 Python ≥3.6 driver and command-line tool for [Koyo Ethernet ClickPLCs](https://www.automationdirect.com/adc/Overview/Catalog/Programmable_Controllers/CLICK_Series_PLCs_(Stackable_Micro_Brick)).
