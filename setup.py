@@ -7,13 +7,15 @@ with open('README.md') as in_file:
 
 setup(
     name='clickplc',
-    version='0.7.0',
+    version='0.7.1',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='http://github.com/numat/clickplc/',
+    url='https://github.com/numat/clickplc/',
     author='Patrick Fuller',
     author_email='pat@numat-tech.com',
+    maintainer='Alex Ruddick',
+    maintainer_email='alex@numat-tech.com',
     packages=['clickplc'],
     entry_points={
         'console_scripts': [('clickplc = clickplc:command_line')]
