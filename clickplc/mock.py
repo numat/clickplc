@@ -24,6 +24,9 @@ class AsyncClientMock(MagicMock):
         """Convert regular mocks into into an async coroutine."""
         return super().__call__(*args, **kwargs)
 
+    def stop(self) -> None:
+        """Close the connection (2.5.3)."""
+        ...
 
 class ClickPLC(realClickPLC):
     """A version of the driver replacing remote communication with local storage for testing."""
@@ -35,6 +38,9 @@ class ClickPLC(realClickPLC):
         self._coils = defaultdict(bool)
         self._discrete_inputs = defaultdict(bool)
         self._registers = defaultdict(bytes)
+        self._detect_pymodbus_version()
+        if self.pymodbus33plus:
+            self.client.close = lambda: None
 
     async def _request(self, method, *args, **kwargs):
         if method == 'read_coils':
