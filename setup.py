@@ -19,7 +19,7 @@ setup(
         'console_scripts': [('clickplc = clickplc:command_line')]
     },
     install_requires=[
-        'pymodbus>=2.4.0,<3; python_version == "3.7"',
+        'pymodbus>=3.3.1,<4; python_version == "3.7"',
         'pymodbus>=2.4.0; python_version == "3.8"',
         'pymodbus>=2.4.0; python_version == "3.9"',
         'pymodbus>=3.0.2,<3.4.0; python_version >= "3.10"',
