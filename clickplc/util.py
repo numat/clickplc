@@ -29,7 +29,8 @@ class AsyncioModbusClient:
         self.timeout = timeout
         try:
             self.client = AsyncModbusTcpClient(address, timeout=timeout)  # 3.0
-            self.pymodbus32plus = not hasattr(self.client, 'protocol')  # >= 3.2.0
+            self.pymodbus32plus = int(pymodbus.__version__[2]) >= 2
+            self.pymodbus33plus = int(pymodbus.__version__[2]) >= 3
         except NameError:
             self.client = ReconnectingAsyncioModbusTcpClient()  # 2.4.x - 2.5.x
         self.lock = asyncio.Lock()
@@ -126,7 +127,10 @@ class AsyncioModbusClient:
     async def _close(self):
         """Close the TCP connection."""
         try:
-            await self.client.close()  # 3.x
+            if self.pymodbus33plus:
+                self.client.close()  # 3.3
+            else:
+                await self.client.close()  # type: ignore  # 3.2
         except AttributeError:  # 2.4.x - 2.5.x
             self.client.stop()  # type: ignore
         self.open = False

@@ -24,6 +24,9 @@ class AsyncClientMock(MagicMock):
         """Convert regular mocks into into an async coroutine."""
         return super().__call__(*args, **kwargs)
 
+    def stop(self) -> None:
+        """Close the connection (2.5.3)."""
+        ...
 
 class ClickPLC(realClickPLC):
     """A version of the driver replacing remote communication with local storage for testing."""
