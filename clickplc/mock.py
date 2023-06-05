@@ -38,6 +38,9 @@ class ClickPLC(realClickPLC):
         self._coils = defaultdict(bool)
         self._discrete_inputs = defaultdict(bool)
         self._registers = defaultdict(bytes)
+        self._detect_pymodbus_version()
+        if self.pymodbus33plus:
+            self.client.close = lambda: None
 
     async def _request(self, method, *args, **kwargs):
         if method == 'read_coils':
