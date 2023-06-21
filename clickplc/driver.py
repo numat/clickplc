@@ -11,7 +11,7 @@ import csv
 import pydoc
 from collections import defaultdict
 from string import digits
-from typing import Any
+from typing import Any, ClassVar
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
@@ -26,7 +26,7 @@ class ClickPLC(AsyncioModbusClient):
     abstracting corner cases and providing a simple asynchronous interface.
     """
 
-    data_types = {
+    data_types: ClassVar[dict] = {
         'x': 'bool',     # Input point
         'y': 'bool',     # Output point
         'c': 'bool',     # (C)ontrol relay
