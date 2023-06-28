@@ -39,17 +39,17 @@ class AsyncioModbusClient:
         """Asynchronously connect with the context manager."""
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, *args) -> None:
         """Provide exit to the context manager."""
         await self._close()
 
-    def _detect_pymodbus_version(self):
+    def _detect_pymodbus_version(self) -> None:
         """Detect various pymodbus versions."""
         self.pymodbus30plus = int(pymodbus.__version__[0]) == 3
         self.pymodbus32plus = self.pymodbus30plus and int(pymodbus.__version__[2]) >= 2
         self.pymodbus33plus = self.pymodbus30plus and int(pymodbus.__version__[2]) >= 3
 
-    async def _connect(self):
+    async def _connect(self) -> None:
         """Start asynchronous reconnect loop."""
         async with self.lock:
             try:
