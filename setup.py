@@ -7,7 +7,7 @@ with open('README.md') as in_file:
 
 setup(
     name='clickplc',
-    version='0.7.1',
+    version='0.8.0',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
