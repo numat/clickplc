@@ -139,7 +139,7 @@ class ClickPLC(AsyncioModbusClient):
             raise ValueError(f"{category} currently unsupported.")
         data_type = self.data_types[category].rstrip(digits)
         for datum in data:
-            if type(datum) == int and data_type == 'float':
+            if type(datum) == int and data_type == 'float':  # noqa: E721
                 datum = float(datum)
             if type(datum) != pydoc.locate(data_type):
                 raise ValueError(f"Expected {address} as a {data_type}.")
