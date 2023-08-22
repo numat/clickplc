@@ -126,7 +126,7 @@ class AsyncioModbusClient:
                 return await future(*args, **kwargs)
             except (asyncio.TimeoutError, asyncio.CancelledError,
                     pymodbus.exceptions.ConnectionException) as e:
-                raise TimeoutError(f"Not connected to PLC: {e}")
+                raise TimeoutError(f"Not connected to PLC: {e}") from e
 
     async def _close(self):
         """Close the TCP connection."""
