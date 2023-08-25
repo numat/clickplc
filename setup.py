@@ -31,7 +31,7 @@ setup(
             'pytest-cov',
             'pytest-asyncio',
             'mypy==1.5.1',
-            'ruff==0.0.285',
+            'ruff==0.0.286',
         ],
     },
     license='GPLv2',
