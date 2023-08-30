@@ -7,7 +7,7 @@ with open('README.md') as in_file:
 
 setup(
     name='clickplc',
-    version='0.8.0',
+    version='0.8.1',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -23,7 +23,7 @@ setup(
     install_requires=[
         'pymodbus>=2.4.0; python_version == "3.8"',
         'pymodbus>=2.4.0; python_version == "3.9"',
-        'pymodbus>=3.0.2,<3.5.0; python_version >= "3.10"',
+        'pymodbus>=3.0.2,<3.6.0; python_version >= "3.10"',
     ],
     extras_require={
         'test': [
@@ -31,7 +31,7 @@ setup(
             'pytest-cov',
             'pytest-asyncio',
             'mypy==1.5.1',
-            'ruff==0.0.285',
+            'ruff==0.0.286',
         ],
     },
     license='GPLv2',
