@@ -22,6 +22,10 @@
       "schedule": [
         "on the first day of the month"
       ]
+    },
+    {
+      "matchPackagePatterns": ["pymodbus"],
+      "rangeStrategy": "widen"
     }
   ]
 }
