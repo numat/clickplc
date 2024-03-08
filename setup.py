@@ -30,7 +30,7 @@ setup(
             'pytest',
             'pytest-cov',
             'pytest-asyncio',
-            'mypy==1.8.0',
+            'mypy==1.9.0',
             'ruff==0.3.0',
         ],
     },
