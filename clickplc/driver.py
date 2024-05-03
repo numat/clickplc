@@ -355,7 +355,7 @@ class ClickPLC(AsyncioModbusClient):
         if end is not None and (end < 1 or end > 250):
             raise ValueError('CTD end must be in [1, 250]')
 
-        address = 49152 + start - 1
+        address = 49152 + 2 * (start - 1)  # 32-bit
         count = 1 if end is None else (end - start + 1)
         registers = await self.read_registers(address, count * 2)
         bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
