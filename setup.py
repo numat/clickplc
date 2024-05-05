@@ -7,7 +7,7 @@ with open('README.md') as in_file:
 
 setup(
     name='clickplc',
-    version='0.8.2',
+    version='0.8.3',
     description="Python driver for Koyo Ethernet ClickPLCs.",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -15,7 +15,7 @@ setup(
     author='Patrick Fuller',
     author_email='pat@numat-tech.com',
     maintainer='Alex Ruddick',
-    maintainer_email='alex@numat-tech.com',
+    maintainer_email='alex@ruddick.tech',
     packages=['clickplc'],
     entry_points={
         'console_scripts': [('clickplc = clickplc:command_line')]
