@@ -87,14 +87,13 @@ async def test_tagged_driver(tagged_driver, expected_tags):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('prefix', ['x', 'y'])
-async def test_bool_roundtrip(plc_driver, prefix):
-    """Confirm x and y bools are read back correctly after being set."""
-    await plc_driver.set(f'{prefix}2', True)
-    await plc_driver.set(f'{prefix}3', [False, True])
-    expected = {f'{prefix}001': False, f'{prefix}002': True, f'{prefix}003': False,
-                f'{prefix}004': True, f'{prefix}005': False}
-    assert expected == await plc_driver.get(f'{prefix}1-{prefix}5')
+async def test_y_roundtrip(plc_driver):
+    """Confirm y (output bools) are read back correctly after being set."""
+    await plc_driver.set('y2', True)
+    await plc_driver.set('y3', [False, True])
+    expected = {'y001': False, 'y002': True, 'y003': False,
+                'y004': True, 'y005': False}
+    assert expected == await plc_driver.get('y1-y5')
 
 
 @pytest.mark.asyncio
@@ -146,8 +145,8 @@ async def test_set_error_handling(plc_driver):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('prefix', ['x', 'y'])
-async def test_xy_error_handling(plc_driver, prefix):
-    """Ensure errors are handled for invalid requests of x and y registers."""
+async def test_get_xy_error_handling(plc_driver, prefix):
+    """Ensure errors are handled for invalid get requests of x and y registers."""
     with pytest.raises(ValueError, match=r'address must be \*01-\*16.'):
         await plc_driver.get(f'{prefix}17')
     with pytest.raises(ValueError, match=r'address must be in \[001, 816\].'):
@@ -156,12 +155,16 @@ async def test_xy_error_handling(plc_driver, prefix):
         await plc_driver.get(f'{prefix}1-{prefix}17')
     with pytest.raises(ValueError, match=r'address must be in \[001, 816\].'):
         await plc_driver.get(f'{prefix}1-{prefix}1001')
+
+@pytest.mark.asyncio
+async def test_set_y_error_handling(plc_driver):
+    """Ensure errors are handled for invalid set requests of y registers."""
     with pytest.raises(ValueError, match=r'address must be \*01-\*16.'):
-        await plc_driver.set(f'{prefix}17', True)
+        await plc_driver.set('y17', True)
     with pytest.raises(ValueError, match=r'address must be in \[001, 816\].'):
-        await plc_driver.set(f'{prefix}1001', True)
+        await plc_driver.set('y1001', True)
     with pytest.raises(ValueError, match=r'Data list longer than available addresses.'):
-        await plc_driver.set(f'{prefix}816', [True, True])
+        await plc_driver.set('y816', [True, True])
 
 
 @pytest.mark.asyncio
