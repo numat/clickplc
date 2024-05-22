@@ -13,10 +13,6 @@ def plc_driver():
     return ClickPLC('fake ip')
 
 
-@pytest.fixture
-def tagged_driver():
-    """Confirm the driver correctly initializes with a good tags file."""
-    return ClickPLC('fake ip', 'clickplc/tests/plc_tags.csv')
 
 
 @pytest.fixture
@@ -66,10 +62,6 @@ def test_driver_cli_tags(capsys):
         command_line(['fakeip', 'tags', 'bogus'])
 
 
-def test_get_tags(tagged_driver, expected_tags):
-    """Confirm that the driver returns correct values on get() calls."""
-    assert expected_tags == tagged_driver.get_tags()
-
 
 def test_unsupported_tags():
     """Confirm the driver detects an improper tags file."""
@@ -78,12 +70,13 @@ def test_unsupported_tags():
 
 
 @pytest.mark.asyncio
-async def test_tagged_driver(tagged_driver, expected_tags):
+async def test_tagged_driver(expected_tags):
     """Test a roundtrip with the driver using a tags file."""
-    await tagged_driver.set('VAH_101_OK', True)
-    state = await tagged_driver.get()
-    assert state.get('VAH_101_OK')
-    assert expected_tags.keys() == state.keys()
+    async with ClickPLC('fakeip', 'clickplc/tests/plc_tags.csv') as tagged_driver:
+        await tagged_driver.set('VAH_101_OK', True)
+        state = await tagged_driver.get()
+        assert state.get('VAH_101_OK')
+        assert expected_tags == tagged_driver.get_tags()
 
 
 @pytest.mark.asyncio
