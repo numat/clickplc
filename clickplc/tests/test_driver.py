@@ -112,8 +112,8 @@ async def test_c_roundtrip(plc_driver):
 @pytest.mark.asyncio
 async def test_df_roundtrip(plc_driver):
     """Confirm df floats are read back correctly after being set."""
-    await plc_driver.set('df2', 2.0)
-    await plc_driver.set('df3', [3.0, 4.0])
+    await plc_driver.set('df1', 0.0)
+    await plc_driver.set('df2', [2.0, 3.0, 4.0, 0.0])
     expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
     assert expected == await plc_driver.get('df1-df5')
 
@@ -159,6 +159,7 @@ async def test_get_xy_error_handling(plc_driver, prefix):
         await plc_driver.get(f'{prefix}1-{prefix}17')
     with pytest.raises(ValueError, match=r'address must be in \[001, 816\].'):
         await plc_driver.get(f'{prefix}1-{prefix}1001')
+
 
 @pytest.mark.asyncio
 async def test_set_y_error_handling(plc_driver):
