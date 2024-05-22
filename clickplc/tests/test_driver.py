@@ -1,4 +1,5 @@
 """Test the driver correctly parses a tags file and responds with correct data."""
+import asyncio
 from unittest import mock
 
 import pytest
@@ -6,18 +7,24 @@ import pytest
 from clickplc import command_line
 from clickplc.mock import ClickPLC
 
+ADDRESS = 'fakeip'
+# from clickplc.driver import ClickPLC
+# ADDRESS = '172.16.0.168'
 
-@pytest.fixture
-def plc_driver():
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Override the default event_loop fixture (which is function-scoped) to be session-scoped."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope='session')
+async def plc_driver():
     """Confirm the driver correctly initializes without a tags file."""
-    return ClickPLC('fake ip')
-
-
-@pytest.fixture
-def tagged_driver():
-    """Confirm the driver correctly initializes with a good tags file."""
-    return ClickPLC('fake ip', 'clickplc/tests/plc_tags.csv')
-
+    async with ClickPLC(ADDRESS) as c:
+        yield c
 
 @pytest.fixture
 def expected_tags():
@@ -47,7 +54,7 @@ def expected_tags():
 @mock.patch('clickplc.ClickPLC', ClickPLC)
 def test_driver_cli(capsys):
     """Confirm the commandline interface works without a tags file."""
-    command_line(['fakeip'])
+    command_line([ADDRESS])
     captured = capsys.readouterr()
     assert 'x816' in captured.out
     assert 'c100' in captured.out
@@ -57,33 +64,30 @@ def test_driver_cli(capsys):
 @mock.patch('clickplc.ClickPLC', ClickPLC)
 def test_driver_cli_tags(capsys):
     """Confirm the commandline interface works with a tags file."""
-    command_line(['fakeip', 'clickplc/tests/plc_tags.csv'])
+    command_line([ADDRESS, 'clickplc/tests/plc_tags.csv'])
     captured = capsys.readouterr()
     assert 'P_101' in captured.out
     assert 'VAHH_101_OK' in captured.out
     assert 'TI_101' in captured.out
     with pytest.raises(SystemExit):
-        command_line(['fakeip', 'tags', 'bogus'])
-
-
-def test_get_tags(tagged_driver, expected_tags):
-    """Confirm that the driver returns correct values on get() calls."""
-    assert expected_tags == tagged_driver.get_tags()
-
-
-def test_unsupported_tags():
-    """Confirm the driver detects an improper tags file."""
-    with pytest.raises(TypeError, match='unsupported data type'):
-        ClickPLC('fake ip', 'clickplc/tests/bad_tags.csv')
+        command_line([ADDRESS, 'tags', 'bogus'])
 
 
 @pytest.mark.asyncio
-async def test_tagged_driver(tagged_driver, expected_tags):
+async def test_unsupported_tags():
+    """Confirm the driver detects an improper tags file."""
+    with pytest.raises(TypeError, match='unsupported data type'):
+        ClickPLC(ADDRESS, 'clickplc/tests/bad_tags.csv')
+
+
+@pytest.mark.asyncio
+async def test_tagged_driver(expected_tags):
     """Test a roundtrip with the driver using a tags file."""
-    await tagged_driver.set('VAH_101_OK', True)
-    state = await tagged_driver.get()
-    assert state.get('VAH_101_OK')
-    assert expected_tags.keys() == state.keys()
+    async with ClickPLC(ADDRESS, 'clickplc/tests/plc_tags.csv') as tagged_driver:
+        await tagged_driver.set('VAH_101_OK', True)
+        state = await tagged_driver.get()
+        assert state.get('VAH_101_OK')
+        assert expected_tags == tagged_driver.get_tags()
 
 
 @pytest.mark.asyncio
@@ -108,8 +112,8 @@ async def test_c_roundtrip(plc_driver):
 @pytest.mark.asyncio
 async def test_df_roundtrip(plc_driver):
     """Confirm df floats are read back correctly after being set."""
-    await plc_driver.set('df2', 2.0)
-    await plc_driver.set('df3', [3.0, 4.0])
+    await plc_driver.set('df1', 0.0)
+    await plc_driver.set('df2', [2.0, 3.0, 4.0, 0.0])
     expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
     assert expected == await plc_driver.get('df1-df5')
 
@@ -155,6 +159,7 @@ async def test_get_xy_error_handling(plc_driver, prefix):
         await plc_driver.get(f'{prefix}1-{prefix}17')
     with pytest.raises(ValueError, match=r'address must be in \[001, 816\].'):
         await plc_driver.get(f'{prefix}1-{prefix}1001')
+
 
 @pytest.mark.asyncio
 async def test_set_y_error_handling(plc_driver):
