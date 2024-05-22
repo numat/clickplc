@@ -367,34 +367,6 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_int()
         return {f'ctd{n}': decoder.decode_32bit_int() for n in range(start, end + 1)}
 
-    async def _set_x(self, start: int, data: list[bool] | bool):
-        """Set X addresses. Called by `set`.
-
-        For more information on the quirks of X coils, read the `_get_x`
-        docstring.
-        """
-        if start % 100 == 0 or start % 100 > 16:
-            raise ValueError('X start address must be *01-*16.')
-        if start < 1 or start > 816:
-            raise ValueError('X start address must be in [001, 816].')
-        coil = 32 * (start // 100) + start % 100 - 1
-
-        if isinstance(data, list):
-            if len(data) > 16 * (9 - start // 100) - start % 100:
-                raise ValueError('Data list longer than available addresses.')
-            payload = []
-            if (start % 100) + len(data) > 16:
-                i = 17 - (start % 100)
-                payload += data[:i] + [False] * 16
-                data = data[i:]
-            while len(data) > 16:
-                payload += data[:16] + [False] * 16
-                data = data[16:]
-            payload += data
-            await self.write_coils(coil, payload)
-        else:
-            await self.write_coil(coil, data)
-
     async def _set_y(self, start: int, data: list[bool] | bool):
         """Set Y addresses. Called by `set`.
 
