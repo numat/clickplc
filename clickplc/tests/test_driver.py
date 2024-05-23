@@ -1,5 +1,4 @@
 """Test the driver correctly parses a tags file and responds with correct data."""
-import asyncio
 from unittest import mock
 
 import pytest
@@ -10,14 +9,6 @@ from clickplc.mock import ClickPLC
 ADDRESS = 'fakeip'
 # from clickplc.driver import ClickPLC
 # ADDRESS = '172.16.0.168'
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Override the default event_loop fixture (which is function-scoped) to be session-scoped."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope='session')
@@ -73,14 +64,14 @@ def test_driver_cli_tags(capsys):
         command_line([ADDRESS, 'tags', 'bogus'])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_unsupported_tags():
     """Confirm the driver detects an improper tags file."""
     with pytest.raises(TypeError, match='unsupported data type'):
         ClickPLC(ADDRESS, 'clickplc/tests/bad_tags.csv')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_tagged_driver(expected_tags):
     """Test a roundtrip with the driver using a tags file."""
     async with ClickPLC(ADDRESS, 'clickplc/tests/plc_tags.csv') as tagged_driver:
@@ -90,7 +81,7 @@ async def test_tagged_driver(expected_tags):
         assert expected_tags == tagged_driver.get_tags()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_y_roundtrip(plc_driver):
     """Confirm y (output bools) are read back correctly after being set."""
     await plc_driver.set('y2', True)
@@ -100,7 +91,7 @@ async def test_y_roundtrip(plc_driver):
     assert expected == await plc_driver.get('y1-y5')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_c_roundtrip(plc_driver):
     """Confirm c bools are read back correctly after being set."""
     await plc_driver.set('c2', True)
@@ -109,7 +100,7 @@ async def test_c_roundtrip(plc_driver):
     assert expected == await plc_driver.get('c1-c5')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_df_roundtrip(plc_driver):
     """Confirm df floats are read back correctly after being set."""
     await plc_driver.set('df1', 0.0)
@@ -118,7 +109,7 @@ async def test_df_roundtrip(plc_driver):
     assert expected == await plc_driver.get('df1-df5')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_ds_roundtrip(plc_driver):
     """Confirm ds ints are read back correctly after being set."""
     await plc_driver.set('ds2', 2)
@@ -127,7 +118,7 @@ async def test_ds_roundtrip(plc_driver):
     assert expected == await plc_driver.get('ds1-ds5')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_get_error_handling(plc_driver):
     """Confirm the driver gives an error on invalid get() calls."""
     with pytest.raises(ValueError, match='An address must be supplied'):
@@ -140,14 +131,14 @@ async def test_get_error_handling(plc_driver):
         await plc_driver.get('c1-x3')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_set_error_handling(plc_driver):
     """Confirm the driver gives an error on invalid set() calls."""
     with pytest.raises(ValueError, match='foo currently unsupported'):
         await plc_driver.set('foo1', 1)
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 @pytest.mark.parametrize('prefix', ['x', 'y'])
 async def test_get_xy_error_handling(plc_driver, prefix):
     """Ensure errors are handled for invalid get requests of x and y registers."""
@@ -161,7 +152,7 @@ async def test_get_xy_error_handling(plc_driver, prefix):
         await plc_driver.get(f'{prefix}1-{prefix}1001')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_set_y_error_handling(plc_driver):
     """Ensure errors are handled for invalid set requests of y registers."""
     with pytest.raises(ValueError, match=r'address must be \*01-\*16.'):
@@ -172,7 +163,7 @@ async def test_set_y_error_handling(plc_driver):
         await plc_driver.set('y816', [True, True])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_c_error_handling(plc_driver):
     """Ensure errors are handled for invalid requests of c registers."""
     with pytest.raises(ValueError, match=r'C start address must be 1-2000.'):
@@ -185,7 +176,7 @@ async def test_c_error_handling(plc_driver):
         await plc_driver.set('c2000', [True, True])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_df_error_handling(plc_driver):
     """Ensure errors are handled for invalid requests of df registers."""
     with pytest.raises(ValueError, match=r'DF must be in \[1, 500\]'):
@@ -198,7 +189,7 @@ async def test_df_error_handling(plc_driver):
         await plc_driver.set('df500', [1.0, 2.0])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_ds_error_handling(plc_driver):
     """Ensure errors are handled for invalid requests of ds registers."""
     with pytest.raises(ValueError, match=r'DS must be in \[1, 4500\]'):
@@ -211,7 +202,7 @@ async def test_ds_error_handling(plc_driver):
         await plc_driver.set('ds4500', [1, 2])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_ctd_error_handling(plc_driver):
     """Ensure errors are handled for invalid requests of ctd registers."""
     with pytest.raises(ValueError, match=r'CTD must be in \[1, 250\]'):
@@ -220,7 +211,7 @@ async def test_ctd_error_handling(plc_driver):
         await plc_driver.get('ctd1-ctd251')
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 @pytest.mark.parametrize('prefix', ['x', 'y', 'c'])
 async def test_bool_typechecking(plc_driver, prefix):
     """Ensure errors are handled for set() requests that should be bools."""
@@ -230,7 +221,7 @@ async def test_bool_typechecking(plc_driver, prefix):
         await plc_driver.set(f'{prefix}1', [1.0, 1])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_df_typechecking(plc_driver):
     """Ensure errors are handled for set() requests that should be floats."""
     await plc_driver.set('df1', 1)
@@ -240,7 +231,7 @@ async def test_df_typechecking(plc_driver):
         await plc_driver.set('df1', [True, True])
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope='session')
 async def test_ds_typechecking(plc_driver):
     """Ensure errors are handled for set() requests that should be ints."""
     with pytest.raises(ValueError, match='Expected .+ as a int'):
