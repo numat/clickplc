@@ -84,11 +84,11 @@ async def test_tagged_driver(expected_tags):
 @pytest.mark.asyncio(scope='session')
 async def test_y_roundtrip(plc_driver):
     """Confirm y (output bools) are read back correctly after being set."""
-    await plc_driver.set('y2', True)
-    await plc_driver.set('y3', [False, True])
-    expected = {'y001': False, 'y002': True, 'y003': False,
-                'y004': True, 'y005': False}
-    assert expected == await plc_driver.get('y1-y5')
+    await plc_driver.set('y1', [False, True, False, True])
+    expected = {'y001': False, 'y002': True, 'y003': False, 'y004': True}
+    assert expected == await plc_driver.get('y1-y4')
+    await plc_driver.set('y816', True)
+    assert await plc_driver.get('y816') is True
 
 
 @pytest.mark.asyncio(scope='session')
@@ -98,6 +98,8 @@ async def test_c_roundtrip(plc_driver):
     await plc_driver.set('c3', [False, True])
     expected = {'c1': False, 'c2': True, 'c3': False, 'c4': True, 'c5': False}
     assert expected == await plc_driver.get('c1-c5')
+    await plc_driver.set('c2000', True)
+    assert await plc_driver.get('c2000') is True
 
 
 @pytest.mark.asyncio(scope='session')
@@ -107,15 +109,19 @@ async def test_df_roundtrip(plc_driver):
     await plc_driver.set('df2', [2.0, 3.0, 4.0, 0.0])
     expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
     assert expected == await plc_driver.get('df1-df5')
+    await plc_driver.set('df500', 1.0)
+    assert await plc_driver.get('df500') == 1.0
 
 
 @pytest.mark.asyncio(scope='session')
 async def test_ds_roundtrip(plc_driver):
     """Confirm ds ints are read back correctly after being set."""
     await plc_driver.set('ds2', 2)
-    await plc_driver.set('ds3', [3, 4])
-    expected = {'ds1': 0, 'ds2': 2, 'ds3': 3, 'ds4': 4, 'ds5': 0}
+    await plc_driver.set('ds3', [-32768, 32767])
+    expected = {'ds1': 0, 'ds2': 2, 'ds3': -32768, 'ds4': 32767, 'ds5': 0}
     assert expected == await plc_driver.get('ds1-ds5')
+    await plc_driver.set('ds4500', 4500)
+    assert await plc_driver.get('ds4500') == 4500
 
 
 @pytest.mark.asyncio(scope='session')
