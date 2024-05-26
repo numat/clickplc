@@ -35,6 +35,7 @@ class ClickPLC(AsyncioModbusClient):
         'ds': 'int16',   # (D)ata register (s)ingle
         'dd': 'int32',   # (D)ata register, (d)ouble
         'df': 'float',   # (D)ata register (f)loating point
+        'td': 'int16',   # (T)imer register
         'ctd': 'int32',  # (C)oun(t)er Current values, (d)ouble
         'sd': 'int16',   # (S)ystem (D)ata register, single
     }
@@ -401,6 +402,29 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_float()
         return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
+    async def _get_td(self, start: int, end: int) -> dict:
+        """Read TD registers. Called by `get`.
+
+        TD entries start at Modbus address 45056 (45057 in the Click software's
+        1-indexed notation). Each TD entry takes 16 bits.
+        """
+        if start < 1 or start > 500:
+            raise ValueError('TD must be in [1, 500]')
+        if end is not None and (end < 1 or end > 500):
+            raise ValueError('TD end must be in [1, 500]')
+
+        address = 45056 + (start - 1)
+        count = 1 if end is None else (end - start + 1)
+        registers = await self.read_registers(address, count)
+        bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
+        lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
+        decoder = BinaryPayloadDecoder.fromRegisters(registers,
+                                                     byteorder=bigendian,
+                                                     wordorder=lilendian)
+        if end is None:
+            return decoder.decode_16bit_int()
+        return {f'td{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
+
     async def _get_ctd(self, start: int, end: int) -> dict:
         """Read CTD registers. Called by `get`.
 
@@ -573,6 +597,33 @@ class ClickPLC(AsyncioModbusClient):
 
         if isinstance(data, list):
             if len(data) > 1000 - start + 1:
+                raise ValueError('Data list longer than available addresses.')
+            payload = _pack(data)
+            await self.write_registers(address, payload, skip_encode=True)
+        else:
+            await self.write_register(address, _pack([data]), skip_encode=True)
+
+    async def _set_td(self, start: int, data: list[int] | int):
+        """Set TD registers. Called by `set`.
+
+        See _get_td for more information.
+        """
+        if start < 1 or start > 500:
+            raise ValueError('TD must be in [1, 500]')
+        address = 45056 + (start - 1)
+
+        bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
+        lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
+
+        def _pack(values: list[int]):
+            builder = BinaryPayloadBuilder(byteorder=bigendian,
+                                           wordorder=lilendian)
+            for value in values:
+                builder.add_16bit_int(int(value))
+            return builder.build()
+
+        if isinstance(data, list):
+            if len(data) > 500 - start + 1:
                 raise ValueError('Data list longer than available addresses.')
             payload = _pack(data)
             await self.write_registers(address, payload, skip_encode=True)
