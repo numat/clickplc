@@ -183,6 +183,24 @@ async def test_c_error_handling(plc_driver):
 
 
 @pytest.mark.asyncio(scope='session')
+async def test_t_error_handling(plc_driver):
+    """Ensure errors are handled for invalid requests of t registers."""
+    with pytest.raises(ValueError, match=r'T start address must be 1-500.'):
+        await plc_driver.get('t501')
+    with pytest.raises(ValueError, match=r'T end address must be >start and <500.'):
+        await plc_driver.get('t1-t501')
+
+
+@pytest.mark.asyncio(scope='session')
+async def test_ct_error_handling(plc_driver):
+    """Ensure errors are handled for invalid requests of ct registers."""
+    with pytest.raises(ValueError, match=r'CT start address must be 1-250.'):
+        await plc_driver.get('ct251')
+    with pytest.raises(ValueError, match=r'CT end address must be >start and <250.'):
+        await plc_driver.get('ct1-ct251')
+
+
+@pytest.mark.asyncio(scope='session')
 async def test_df_error_handling(plc_driver):
     """Ensure errors are handled for invalid requests of df registers."""
     with pytest.raises(ValueError, match=r'DF must be in \[1, 500\]'):
@@ -218,7 +236,7 @@ async def test_ctd_error_handling(plc_driver):
 
 
 @pytest.mark.asyncio(scope='session')
-@pytest.mark.parametrize('prefix', ['x', 'y', 'c'])
+@pytest.mark.parametrize('prefix', ['y', 'c'])
 async def test_bool_typechecking(plc_driver, prefix):
     """Ensure errors are handled for set() requests that should be bools."""
     with pytest.raises(ValueError, match='Expected .+ as a bool'):
