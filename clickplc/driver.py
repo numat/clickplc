@@ -30,10 +30,10 @@ class ClickPLC(AsyncioModbusClient):
         'x': 'bool',     # Input point
         'y': 'bool',     # Output point
         'c': 'bool',     # (C)ontrol relay
-        'df': 'float',   # (D)ata register (f)loating point
         'ds': 'int16',   # (D)ata register (s)igned int
-        'sd': 'int16',   # (S)ystem (D)ata
+        'df': 'float',   # (D)ata register (f)loating point
         'ctd': 'int32',  # (C)oun(t)er Current Values, (d)ouble
+        'sd': 'int16',   # (S)ystem (D)ata
     }
 
     def __init__(self, address, tag_filepath='', timeout=1):
@@ -274,6 +274,29 @@ class ClickPLC(AsyncioModbusClient):
             return coils.bits[0]
         return {f'c{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
 
+    async def _get_ds(self, start: int, end: int) -> dict | int:
+        """Read DS registers. Called by `get`.
+
+        DS entries start at Modbus address 0 (1 in the Click software's
+        1-indexed notation). Each DS entry takes 16 bits.
+        """
+        if start < 1 or start > 4500:
+            raise ValueError('DS must be in [1, 4500]')
+        if end is not None and (end < 1 or end > 4500):
+            raise ValueError('DS end must be in [1, 4500]')
+
+        address = start - 1
+        count = 1 if end is None else (end - start + 1)
+        registers = await self.read_registers(address, count)
+        bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
+        lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
+        decoder = BinaryPayloadDecoder.fromRegisters(registers,
+                                                     byteorder=bigendian,
+                                                     wordorder=lilendian)
+        if end is None:
+            return decoder.decode_16bit_int()
+        return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
+
     async def _get_df(self, start: int, end: int) -> dict | float:
         """Read DF registers. Called by `get`.
 
@@ -298,28 +321,28 @@ class ClickPLC(AsyncioModbusClient):
             return decoder.decode_32bit_float()
         return {f'df{n}': decoder.decode_32bit_float() for n in range(start, end + 1)}
 
-    async def _get_ds(self, start: int, end: int) -> dict | int:
-        """Read DS registers. Called by `get`.
+    async def _get_ctd(self, start: int, end: int) -> dict:
+        """Read CTD registers. Called by `get`.
 
-        DS entries start at Modbus address 0 (1 in the Click software's
-        1-indexed notation). Each DS entry takes 16 bits.
+        CTD entries start at Modbus address 449152 (449153 in the Click software's
+        1-indexed notation). Each CTD entry takes 32 bits, which is 2 16bit registers.
         """
-        if start < 1 or start > 4500:
-            raise ValueError('DS must be in [1, 4500]')
-        if end is not None and (end < 1 or end > 4500):
-            raise ValueError('DS end must be in [1, 4500]')
+        if start < 1 or start > 250:
+            raise ValueError('CTD must be in [1, 250]')
+        if end is not None and (end < 1 or end > 250):
+            raise ValueError('CTD end must be in [1, 250]')
 
-        address = start - 1
+        address = 49152 + 2 * (start - 1)  # 32-bit
         count = 1 if end is None else (end - start + 1)
-        registers = await self.read_registers(address, count)
+        registers = await self.read_registers(address, count * 2)
         bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
         lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
         decoder = BinaryPayloadDecoder.fromRegisters(registers,
                                                      byteorder=bigendian,
                                                      wordorder=lilendian)
         if end is None:
-            return decoder.decode_16bit_int()
-        return {f'ds{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
+            return decoder.decode_32bit_int()
+        return {f'ctd{n}': decoder.decode_32bit_int() for n in range(start, end + 1)}
 
     async def _get_sd(self, start: int, end: int) -> dict | int:
         """Read SD registers. Called by `get`.
@@ -343,29 +366,6 @@ class ClickPLC(AsyncioModbusClient):
         if end is None:
             return decoder.decode_16bit_int()
         return {f'sd{n}': decoder.decode_16bit_int() for n in range(start, end + 1)}
-
-    async def _get_ctd(self, start: int, end: int) -> dict:
-        """Read CTD registers. Called by `get`.
-
-        CTD entries start at Modbus address 449152 (449153 in the Click software's
-        1-indexed notation). Each CTD entry takes 32 bits, which is 2 16bit registers.
-        """
-        if start < 1 or start > 250:
-            raise ValueError('CTD must be in [1, 250]')
-        if end is not None and (end < 1 or end > 250):
-            raise ValueError('CTD end must be in [1, 250]')
-
-        address = 49152 + 2 * (start - 1)  # 32-bit
-        count = 1 if end is None else (end - start + 1)
-        registers = await self.read_registers(address, count * 2)
-        bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
-        lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
-        decoder = BinaryPayloadDecoder.fromRegisters(registers,
-                                                     byteorder=bigendian,
-                                                     wordorder=lilendian)
-        if end is None:
-            return decoder.decode_32bit_int()
-        return {f'ctd{n}': decoder.decode_32bit_int() for n in range(start, end + 1)}
 
     async def _set_y(self, start: int, data: list[bool] | bool):
         """Set Y addresses. Called by `set`.
