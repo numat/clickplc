@@ -116,6 +116,16 @@ async def test_df_roundtrip(plc_driver):
     assert await plc_driver.get('df500') == 1.0
 
 @pytest.mark.asyncio(scope='session')
+async def test_td_roundtrip(plc_driver):
+    """Confirm td ints are read back correctly after being set."""
+    await plc_driver.set('td1', 1)
+    await plc_driver.set('td2', [2, -32768, 32767, 0])
+    expected = {'td1': 1, 'td2': 2, 'td3': -32768, 'td4': 32767, 'td5': 0}
+    assert expected == await plc_driver.get('td1-td5')
+    await plc_driver.set('td500', 500)
+    assert await plc_driver.get('td500') == 500
+
+@pytest.mark.asyncio(scope='session')
 async def test_dd_roundtrip(plc_driver):
     """Confirm dd double ints are read back correctly after being set."""
     await plc_driver.set('dd1', 1)
@@ -230,6 +240,14 @@ async def test_dd_error_handling(plc_driver):
         await plc_driver.set('dd1001', 1)
     with pytest.raises(ValueError, match=r'Data list longer than available addresses.'):
         await plc_driver.set('dd1000', [1, 2])
+
+@pytest.mark.asyncio(scope='session')
+async def test_td_error_handling(plc_driver):
+    """Ensure errors are handled for invalid requests of td registers."""
+    with pytest.raises(ValueError, match=r'TD must be in \[1, 500\]'):
+        await plc_driver.get('td501')
+    with pytest.raises(ValueError, match=r'TD end must be in \[1, 500\]'):
+        await plc_driver.get('td1-td501')
 
 @pytest.mark.asyncio(scope='session')
 async def test_ctd_error_handling(plc_driver):
