@@ -267,7 +267,7 @@ class ClickPLC(AsyncioModbusClient):
             count = 1
         else:
             if end <= start or end > 2000:
-                raise ValueError('C end address must be >start and <2000.')
+                raise ValueError('C end address must be >start and <=2000.')
             end_coil = 16384 + end - 1
             count = end_coil - start_coil + 1
 
@@ -294,7 +294,7 @@ class ClickPLC(AsyncioModbusClient):
             count = 1
         else:
             if end <= start or end > 500:
-                raise ValueError('T end address must be >start and <500.')
+                raise ValueError('T end address must be >start and <=500.')
             end_coil = 14555 + end - 1
             count = end_coil - start_coil + 1
 
@@ -321,7 +321,7 @@ class ClickPLC(AsyncioModbusClient):
             count = 1
         else:
             if end <= start or end > 250:
-                raise ValueError('CT end address must be >start and <250.')
+                raise ValueError('CT end address must be >start and <=250.')
             end_coil = 49401 + end - 1
             count = end_coil - start_coil + 1
 
@@ -341,7 +341,7 @@ class ClickPLC(AsyncioModbusClient):
         if end is not None and (end < 1 or end > 4500):
             raise ValueError('DS end must be in [1, 4500]')
 
-        address = start - 1
+        address = 0 + start - 1
         count = 1 if end is None else (end - start + 1)
         registers = await self.read_registers(address, count)
         bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
@@ -509,7 +509,6 @@ class ClickPLC(AsyncioModbusClient):
         if start < 1 or start > 4500:
             raise ValueError('DS must be in [1, 4500]')
         address = (start - 1)
-
 
         bigendian = Endian.BIG if self.pymodbus35plus else Endian.Big  # type:ignore[attr-defined]
         lilendian = Endian.LITTLE if self.pymodbus35plus else Endian.Little  # type:ignore
