@@ -30,6 +30,8 @@ class ClickPLC(AsyncioModbusClient):
         'x': 'bool',     # Input point
         'y': 'bool',     # Output point
         'c': 'bool',     # (C)ontrol relay
+        't': 'bool',     # (T)imer
+        'ct': 'bool',    # (C)oun(t)er
         'ds': 'int16',   # (D)ata register (s)ingle
         'df': 'float',   # (D)ata register (f)loating point
         'ctd': 'int32',  # (C)oun(t)er Current values, (d)ouble
@@ -273,6 +275,60 @@ class ClickPLC(AsyncioModbusClient):
         if count == 1:
             return coils.bits[0]
         return {f'c{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
+
+    async def _get_t(self, start: int, end: int) -> dict | bool:
+        """Read T addresses.
+
+        T entries start at 45056 (45057 in the Click software's 1-indexed
+        notation). This continues for 500 bits, ending at 45555.
+
+        The response always returns a full byte of data. If you request
+        a number of addresses not divisible by 8, it will have extra data. The
+        extra data here is discarded before returning.
+        """
+        if start < 1 or start > 500:
+            raise ValueError('T start address must be 1-500.')
+
+        start_coil = 45057 + start - 1
+        if end is None:
+            count = 1
+        else:
+            if end <= start or end > 500:
+                raise ValueError('T end address must be >start and <500.')
+            end_coil = 14555 + end - 1
+            count = end_coil - start_coil + 1
+
+        coils = await self.read_coils(start_coil, count)
+        if count == 1:
+            return coils.bits[0]
+        return {f't{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
+
+    async def _get_ct(self, start: int, end: int) -> dict | bool:
+        """Read CT addresses.
+
+        CT entries start at 49152 (49153 in the Click software's 1-indexed
+        notation). This continues for 250 bits, ending at 49402.
+
+        The response always returns a full byte of data. If you request
+        a number of addresses not divisible by 8, it will have extra data. The
+        extra data here is discarded before returning.
+        """
+        if start < 1 or start > 250:
+            raise ValueError('CT start address must be 1-250.')
+
+        start_coil = 49152 + start - 1
+        if end is None:
+            count = 1
+        else:
+            if end <= start or end > 250:
+                raise ValueError('CT end address must be >start and <250.')
+            end_coil = 49401 + end - 1
+            count = end_coil - start_coil + 1
+
+        coils = await self.read_coils(start_coil, count)
+        if count == 1:
+            return coils.bits[0]
+        return {f'ct{(start + i)}': bit for i, bit in enumerate(coils.bits) if i < count}
 
     async def _get_ds(self, start: int, end: int) -> dict | int:
         """Read DS registers. Called by `get`.
