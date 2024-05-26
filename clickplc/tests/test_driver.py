@@ -96,16 +96,6 @@ async def test_c_roundtrip(plc_driver):
     assert await plc_driver.get('c2000') is True
 
 @pytest.mark.asyncio(scope='session')
-async def test_df_roundtrip(plc_driver):
-    """Confirm df floats are read back correctly after being set."""
-    await plc_driver.set('df1', 0.0)
-    await plc_driver.set('df2', [2.0, 3.0, 4.0, 0.0])
-    expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
-    assert expected == await plc_driver.get('df1-df5')
-    await plc_driver.set('df500', 1.0)
-    assert await plc_driver.get('df500') == 1.0
-
-@pytest.mark.asyncio(scope='session')
 async def test_ds_roundtrip(plc_driver):
     """Confirm ds ints are read back correctly after being set."""
     await plc_driver.set('ds1', 1)
@@ -114,6 +104,16 @@ async def test_ds_roundtrip(plc_driver):
     assert expected == await plc_driver.get('ds1-ds5')
     await plc_driver.set('ds4500', 4500)
     assert await plc_driver.get('ds4500') == 4500
+
+@pytest.mark.asyncio(scope='session')
+async def test_df_roundtrip(plc_driver):
+    """Confirm df floats are read back correctly after being set."""
+    await plc_driver.set('df1', 0.0)
+    await plc_driver.set('df2', [2.0, 3.0, 4.0, 0.0])
+    expected = {'df1': 0.0, 'df2': 2.0, 'df3': 3.0, 'df4': 4.0, 'df5': 0.0}
+    assert expected == await plc_driver.get('df1-df5')
+    await plc_driver.set('df500', 1.0)
+    assert await plc_driver.get('df500') == 1.0
 
 @pytest.mark.asyncio(scope='session')
 async def test_dd_roundtrip(plc_driver):
