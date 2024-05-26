@@ -108,13 +108,22 @@ async def test_df_roundtrip(plc_driver):
 @pytest.mark.asyncio(scope='session')
 async def test_ds_roundtrip(plc_driver):
     """Confirm ds ints are read back correctly after being set."""
-    await plc_driver.set('ds2', 2)
+    await plc_driver.set('ds1', 1)
     await plc_driver.set('ds3', [-32768, 32767])
-    expected = {'ds1': 0, 'ds2': 2, 'ds3': -32768, 'ds4': 32767, 'ds5': 0}
+    expected = {'ds1': 1, 'ds2': 0, 'ds3': -32768, 'ds4': 32767, 'ds5': 0}
     assert expected == await plc_driver.get('ds1-ds5')
     await plc_driver.set('ds4500', 4500)
     assert await plc_driver.get('ds4500') == 4500
 
+@pytest.mark.asyncio(scope='session')
+async def test_dd_roundtrip(plc_driver):
+    """Confirm dd double ints are read back correctly after being set."""
+    await plc_driver.set('dd1', 1)
+    await plc_driver.set('dd3', [-2**31, 2**31 - 1])
+    expected = {'dd1': 1, 'dd2': 0, 'dd3': -2**31, 'dd4': 2**31 - 1, 'dd5': 0}
+    assert expected == await plc_driver.get('dd1-dd5')
+    await plc_driver.set('dd1000', 1000)
+    assert await plc_driver.get('dd1000') == 1000
 
 @pytest.mark.asyncio(scope='session')
 async def test_get_error_handling(plc_driver):
@@ -210,6 +219,17 @@ async def test_ds_error_handling(plc_driver):
     with pytest.raises(ValueError, match=r'Data list longer than available addresses.'):
         await plc_driver.set('ds4500', [1, 2])
 
+@pytest.mark.asyncio(scope='session')
+async def test_dd_error_handling(plc_driver):
+    """Ensure errors are handled for invalid requests of dd registers."""
+    with pytest.raises(ValueError, match=r'DD must be in \[1, 1000\]'):
+        await plc_driver.get('dd1001')
+    with pytest.raises(ValueError, match=r'DD end must be in \[1, 1000\]'):
+        await plc_driver.get('dd1-dd1001')
+    with pytest.raises(ValueError, match=r'DD must be in \[1, 1000\]'):
+        await plc_driver.set('dd1001', 1)
+    with pytest.raises(ValueError, match=r'Data list longer than available addresses.'):
+        await plc_driver.set('dd1000', [1, 2])
 
 @pytest.mark.asyncio(scope='session')
 async def test_ctd_error_handling(plc_driver):
@@ -238,11 +258,12 @@ async def test_df_typechecking(plc_driver):
         await plc_driver.set('df1', [True, True])
 
 @pytest.mark.asyncio(scope='session')
-async def test_ds_typechecking(plc_driver):
+@pytest.mark.parametrize('prefix', ['ds', 'dd'])
+async def test_ds_dd_typechecking(plc_driver, prefix):
     """Ensure errors are handled for set() requests that should be ints."""
     with pytest.raises(ValueError, match='Expected .+ as a int'):
-        await plc_driver.set('ds1', 1.0)
+        await plc_driver.set(f'{prefix}1', 1.0)
     with pytest.raises(ValueError, match='Expected .+ as a int'):
-        await plc_driver.set('ds1', True)
+        await plc_driver.set(f'{prefix}1', True)
     with pytest.raises(ValueError, match='Expected .+ as a int'):
-        await plc_driver.set('ds1', [True, True])
+        await plc_driver.set(f'{prefix}1', [True, True])
