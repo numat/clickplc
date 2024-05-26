@@ -2,6 +2,7 @@
 A Python driver for Koyo ClickPLC ethernet units.
 
 Distributed under the GNU General Public License v2
+Copyright (C) 2024 Alex Ruddick
 Copyright (C) 2020 NuMat Technologies
 """
 from __future__ import annotations
