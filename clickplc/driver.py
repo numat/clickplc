@@ -30,10 +30,10 @@ class ClickPLC(AsyncioModbusClient):
         'x': 'bool',     # Input point
         'y': 'bool',     # Output point
         'c': 'bool',     # (C)ontrol relay
-        'ds': 'int16',   # (D)ata register (s)igned int
+        'ds': 'int16',   # (D)ata register (s)ingle
         'df': 'float',   # (D)ata register (f)loating point
-        'ctd': 'int32',  # (C)oun(t)er Current Values, (d)ouble
-        'sd': 'int16',   # (S)ystem (D)ata
+        'ctd': 'int32',  # (C)oun(t)er Current values, (d)ouble
+        'sd': 'int16',   # (S)ystem (D)ata register, single
     }
 
     def __init__(self, address, tag_filepath='', timeout=1):
