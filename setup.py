@@ -32,7 +32,7 @@ setup(
             'pytest-cov',
             'pytest-xdist',
             'mypy==1.10.0',
-            'ruff==0.4.2',
+            'ruff==0.4.7',
         ],
     },
     license='GPLv2',
