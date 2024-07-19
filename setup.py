@@ -31,7 +31,7 @@ setup(
             'pytest-asyncio>=0.23.7,<=0.23.9',
             'pytest-cov',
             'pytest-xdist',
-            'mypy==1.10.1',
+            'mypy==1.11.0',
             'ruff==0.5.0',
         ],
     },
